@@ -7,6 +7,7 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 const fmt = (t) => { t = Math.max(0, t || 0); const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = Math.floor(t % 60);
   return [h, m, s].map(n => String(n).padStart(2, "0")).join(":"); };
 const fmtS = (t) => { const m = Math.floor(t / 60), s = (t % 60).toFixed(1).padStart(4, "0"); return `${String(m).padStart(2, "0")}:${s}`; };
+const t_ = (x) => (window.I18N ? I18N.t(x) : x);
 const escHtml = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function api(path, body) {
@@ -38,7 +39,7 @@ const DEF = {
   tag: false, tagText: "",
   color: { brightness: 1, contrast: 1, saturation: 1 },
   srcVol: 1, music: null,
-  format: "9:16", anim: "pop", wizAuto: true, pack: null, snap: true, translate: false, safe: false,
+  format: "9:16", anim: "pop", wizAuto: true, pack: null, snap: true, uiLang: "tr", translate: false, safe: false,
   hook: { on: false, text: "", style: "box", dur: 3, y: 0.16 },
   pb: { on: false, pos: "bottom", color: "#C8F135" },
   enhance: { denoise: false, normalize: false },
@@ -1088,7 +1089,7 @@ function drawSafe() {
   for (const [x, y, w, h, l] of zones) {
     ctx.fillStyle = "rgba(255,70,70,.22)"; ctx.fillRect(x * Wc, y * Hc, w * Wc, h * Hc);
     ctx.strokeStyle = "rgba(255,120,120,.9)"; ctx.lineWidth = 2; ctx.strokeRect(x * Wc + 1, y * Hc + 1, w * Wc - 2, h * Hc - 2);
-    ctx.fillStyle = "#fff"; ctx.font = `600 ${14}px "Segoe UI", sans-serif`; ctx.textBaseline = "top"; ctx.fillText(l, x * Wc + 6, y * Hc + 6);
+    ctx.fillStyle = "#fff"; ctx.font = `600 ${14}px "Segoe UI", sans-serif`; ctx.textBaseline = "top"; ctx.fillText(t_(l), x * Wc + 6, y * Hc + 6);
   }
   ctx.restore();
 }
@@ -1101,7 +1102,7 @@ function drawOverlays(t) {
     const up = S.style !== "clean";
     if (T) { const ch = currentChunk(t); if (ch) { const ws = ch.filter(w => w.text); const hi = ws.findIndex((w, i) => t >= w.start && (i === ws.length - 1 || t < ws[i + 1].start));
       drawSubs(ws.map(w => up ? trUpper(w.text, T.language) : w.text), hi, subAnim(t - ws[0].start, hi >= 0 ? t - ws[hi].start : 1)); } }
-    else { const ph = (t % 1.2); drawSubs(["altyazı", "burada", "görünür"].map(w => up ? trUpper(w, "tr") : w), Math.min(2, Math.floor(ph / 0.4)), subAnim(ph, ph % 0.4)); }
+    else { const ph = (t % 1.2); drawSubs(t_("altyazı burada görünür").split(" ").map(w => up ? trUpper(w, S.uiLang === "tr" ? "tr" : "en") : w), Math.min(2, Math.floor(ph / 0.4)), subAnim(ph, ph % 0.4)); }
   }
   if (S.tag && S.tagText) {
     const y = (S.preset === "stack" || S.preset === "focus" ? S.ratio : 0.12) * cv.height;
@@ -1131,8 +1132,8 @@ function drawFrame() {
   ctx.fillStyle = "#000"; ctx.fillRect(0, 0, cv.width, cv.height);
   if (media && !(v.readyState >= 2 && v.videoWidth)) {
     ctx.fillStyle = "#9AA1AD"; ctx.font = `600 26px "Segoe UI", sans-serif`; ctx.textAlign = "center";
-    ctx.fillText(v.error ? "Bu video önizlenemiyor" : "Video yükleniyor…", cv.width / 2, cv.height / 2);
-    if (v.error) { ctx.font = `500 20px "Segoe UI", sans-serif`; ctx.fillText("Dışa aktarma yine çalışır", cv.width / 2, cv.height / 2 + 34); }
+    ctx.fillText(t_(v.error ? "Bu video önizlenemiyor" : "Video yükleniyor…"), cv.width / 2, cv.height / 2);
+    if (v.error) { ctx.font = `500 20px "Segoe UI", sans-serif`; ctx.fillText(t_("Dışa aktarma yine çalışır"), cv.width / 2, cv.height / 2 + 34); }
     ctx.textAlign = "start"; return;
   }
   if (media) {
@@ -1150,13 +1151,13 @@ function drawFrame() {
     { const a = P.range.start ?? 0, b = P.range.end ?? media.duration; drawHook(Math.max(0, t - a), b - a); drawProgress((t - a) / Math.max(0.1, b - a)); }
     drawSafe();
     if (!LIC.licensed) { ctx.save(); ctx.font = `700 ${34 * PS * 0.8}px Poppins, sans-serif`; ctx.textAlign = "right"; ctx.textBaseline = "top";
-      ctx.globalAlpha = 0.68; ctx.lineWidth = 3 * PS; ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.strokeText("Streamchisel ile yapıldı", cv.width - 28 * PS, cv.height * 0.115);
-      ctx.fillStyle = "#fff"; ctx.fillText("Streamchisel ile yapıldı", cv.width - 28 * PS, cv.height * 0.115); ctx.restore(); }
+      ctx.globalAlpha = 0.68; ctx.lineWidth = 3 * PS; ctx.strokeStyle = "rgba(0,0,0,.45)"; ctx.strokeText(t_("Streamchisel ile yapıldı"), cv.width - 28 * PS, cv.height * 0.115);
+      ctx.fillStyle = "#fff"; ctx.fillText(t_("Streamchisel ile yapıldı"), cv.width - 28 * PS, cv.height * 0.115); ctx.restore(); }
     $("tNow").textContent = fmt(t);
     drawPlayhead();
     if ($("dTr").open) for (const row of $("chunks").children) { const ch = T && T.chunks[+row.dataset.i]; row.classList.toggle("cur", !!ch && ch[0] && t >= ch[0].start && t <= ch[ch.length - 1].end); }
   } else {
-    ctx.fillStyle = "#3A3F49"; ctx.font = `600 28px "Segoe UI", sans-serif`; ctx.textAlign = "center"; ctx.fillText("Önizleme", cv.width / 2, cv.height / 2); ctx.textAlign = "start";
+    ctx.fillStyle = "#3A3F49"; ctx.font = `600 28px "Segoe UI", sans-serif`; ctx.textAlign = "center"; ctx.fillText(t_("Önizleme"), cv.width / 2, cv.height / 2); ctx.textAlign = "start";
     drawSafe();
   }
 }
@@ -1319,7 +1320,7 @@ $("bExp").onclick = () => {
   if (S.music) parts.push("müzik");
   if (P.sfx.length) parts.push(`${P.sfx.length} efekt`);
   if (S.subs) parts.push(transcriptCovers(a, b) ? "önizlediğin altyazı" : "altyazı oluşturulacak");
-  $("expInfo").textContent = parts.join(" · ");
+  $("expInfo").textContent = parts.map(t_).join(" · ");
   $("expName").value = media.name.replace(/\.[^.]+$/, "") + "_dikey";
   $("expProg").hidden = true; $("expDone").hidden = true; $("expErr").textContent = "";
   $("expReveal").hidden = $("expPlay").hidden = $("expQr").hidden = true; $("expGo").hidden = false; $("expGo").disabled = false; $("expQueue").hidden = false;
@@ -1686,13 +1687,15 @@ $("fLic").onsubmit = async (e) => {
   $("licGo").disabled = false;
 };
 $("licOff").onclick = async () => {
-  if (!confirm("Lisans bu bilgisayardan kaldırılsın mı? Başka bilgisayarda kullanmak için yer açılır.")) return;
+  if (!confirm(t_("Lisans bu bilgisayardan kaldırılsın mı? Başka bilgisayarda kullanmak için yer açılır."))) return;
   try { LIC = { ...LIC, ...(await api("/api/license/deactivate", {})) }; syncLicense(); toast("Lisans bu bilgisayardan kaldırıldı"); }
   catch (err) { $("licErr").textContent = err.message; }
 };
 $("updGo").onclick = () => LIC.update && openUrl(LIC.update.url);
 $("updLater").onclick = () => { try { localStorage.setItem("sc.skipUpdate", LIC.update.version); } catch (e) {} $("updBar").hidden = true; };
 document.addEventListener("click", (e) => { if (e.target.id === "freeBuy") { e.preventDefault(); openUrl(LIC.buy_url); } });
+
+$("uiLang").onchange = async (e) => { S.uiLang = e.target.value; save(); if (window.I18N) await I18N.set(S.uiLang); syncAll(); };
 
 // ================================================================== başlangıç
 function renderAll() { syncKadraj(); renderRects(); renderOutOv(); drawTimeline(); updRange(); renderSfxList(); }
@@ -1706,6 +1709,8 @@ function syncAll() { applyFormat(); syncSnap(); syncAnlar(); $("bSafe").setAttri
   LAYOUTS = st.layouts || [];
   try { SFXLIB = (await api("/api/sfx")).items; } catch (e) {}
   if (S.music) $("musA").src = "/media?path=" + encodeURIComponent(S.music.path);
+  $("uiLang").value = S.uiLang || "tr";
+  if (window.I18N) await I18N.set(S.uiLang || "tr");
   renderRecent(st.recent || []); renderLayouts(); syncAll();
   document.fonts.ready.then(() => { syncLogoPanel(); refreshLogo(); });
   requestAnimationFrame(frame);

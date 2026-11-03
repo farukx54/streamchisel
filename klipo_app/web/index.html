@@ -220,6 +220,7 @@ textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); bo
 .licbox b.big { font-size: 18px; }
 .freeinfo { font-size: 12.5px; color: var(--muted); background: var(--panel2); border-radius: 8px; padding: 8px 10px; }
 .freeinfo a { color: var(--accent); cursor: pointer; }
+.langsel { width: auto; height: 38px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); font-weight: 700; font-size: 12px; }
 .drop { position: fixed; inset: 0; background: rgba(14,15,17,.85); border: 3px dashed var(--accent); display: grid; place-items: center; z-index: 8; font-size: 22px; font-weight: 700; color: var(--accent); }
 @media (max-width: 1000px) { .body { grid-template-columns: 64px 1fr; } main { grid-column: 1 / -1; } }
 </style>
@@ -229,8 +230,9 @@ textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); bo
   <div class="upd" id="updBar" hidden><span id="updTxt"></span><button class="btn tiny primary" id="updGo" type="button">İndir ve kur</button><button class="btn tiny ghost" id="updLater" type="button">Sonra</button></div>
   <header>
     <div class="logo"><img src="/static/logo.svg" width="30" height="30" alt=""><span>Stream<span style="color:var(--accent)">chisel</span></span></div>
-    <div class="file"><b id="fname">Video açılmadı</b><span id="fmeta">Bir yayın kaydı aç, sürükle-bırak ya da linkten indir</span></div>
+    <div class="file"><b id="fname" data-no-tr>Video açılmadı</b><span id="fmeta">Bir yayın kaydı aç, sürükle-bırak ya da linkten indir</span></div>
     <div class="spacer"></div>
+    <select id="uiLang" class="langsel" aria-label="Dil / Language / Язык" data-no-tr><option value="tr">TR</option><option value="en">EN</option><option value="ru">RU</option></select>
     <button class="btn" id="bWiz" type="button" disabled title="Birkaç adımda hazır klip">✨ Hızlı klip</button>
     <button class="btn ghost" id="bProj" type="button" title="Projeyi kaydet / aç">Proje</button>
     <button class="btn" id="bLic" type="button" hidden>Lisans</button>
@@ -473,10 +475,10 @@ textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); bo
             <div class="tlname" style="height:24px;gap:4px;padding-left:6px"><button class="btn tiny" id="bZoomOut" type="button" aria-label="Zaman çizelgesini uzaklaştır" style="height:18px;width:24px;padding:0">−</button><button class="btn tiny" id="bZoomIn" type="button" aria-label="Zaman çizelgesini yakınlaştır" style="height:18px;width:24px;padding:0">+</button></div><div class="track ruler" id="trRuler"></div>
             <div class="tlname" style="height:46px">Video</div><div class="track vid" id="trVid"></div>
             <div class="tlname" style="height:38px" id="audName">Kaynak ses</div><div class="track au" id="trAud"><canvas id="cvAud" aria-label="Ses dalgası"></canvas></div>
-            <div class="tlname" style="height:28px">Altyazı</div><div class="track sm" id="trSub"></div>
+            <div class="tlname" style="height:28px">Altyazı</div><div class="track sm" id="trSub" data-no-tr></div>
             <div class="tlname" style="height:28px">Zoom</div><div class="track sm" id="trZoom"></div>
             <div class="tlname" style="height:28px">Efekt</div><div class="track sm" id="trFx"></div>
-            <div class="tlname" style="height:28px">Müzik</div><div class="track sm" id="trMus"></div>
+            <div class="tlname" style="height:28px">Müzik</div><div class="track sm" id="trMus" data-no-tr></div>
           </div>
           <div class="tlinfo"><span id="rangeTxt">Klip: tüm video</span><span>Turuncu çizgili: kesilecek sessizlik · Kırmızı çizgili: sildiğin parça · Ctrl+tekerlek: yakınlaştır</span></div>
         </div>
@@ -546,7 +548,7 @@ textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); bo
 <dialog id="dTr" class="wide">
   <form method="dialog" id="fTr">
     <div><h2>Altyazıyı düzenle</h2><div class="hint">Yanlış kelimeyi düzelt, gereksiz satırı sil. "Git" ile o ana atla.</div></div>
-    <div class="chunks" id="chunks"></div>
+    <div class="chunks" id="chunks" data-no-tr></div>
     <div class="actions"><button class="btn" type="button" id="trRedo">Yeniden oluştur</button><button class="btn primary" type="button" id="trClose">Bitti</button></div>
   </form>
 </dialog>
@@ -657,6 +659,7 @@ textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); bo
 <div class="toast" id="toast" role="status"></div>
 <audio id="musA" preload="auto"></audio>
 <script src="/static/logo.js"></script>
+<script src="/static/i18n.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>
