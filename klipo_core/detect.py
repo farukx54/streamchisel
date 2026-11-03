@@ -13,7 +13,7 @@ from typing import Optional
 from .ffmpeg_tools import _CREATE_FLAGS, find_tool, probe
 
 
-def _frame(path: str, t: float, width: int = 960):
+def _frame(path: str, t: float, width: int = 960, color: bool = False):
     import cv2
     import numpy as np
 
@@ -22,7 +22,21 @@ def _frame(path: str, t: float, width: int = 960):
     out = subprocess.run(args, capture_output=True, creationflags=_CREATE_FLAGS).stdout
     if not out:
         return None
-    return cv2.imdecode(np.frombuffer(out, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+    return cv2.imdecode(np.frombuffer(out, dtype=np.uint8), cv2.IMREAD_COLOR if color else cv2.IMREAD_GRAYSCALE)
+
+
+def _skin(bgr) -> float:
+    """Yüz kutusunun ortasındaki ten rengi oranı (0..1). Oyundaki kafatası/maske gibi
+    gri-beyaz "yüzleri" gerçek yüzden ayırmaya yarar."""
+    import cv2
+
+    h, w = bgr.shape[:2]
+    c = bgr[h // 5: h * 4 // 5, w // 5: w * 4 // 5]
+    if c.size == 0:
+        return 0.0
+    ycc = cv2.cvtColor(c, cv2.COLOR_BGR2YCrCb)
+    cr, cb = ycc[..., 1], ycc[..., 2]
+    return float(((cr >= 133) & (cr <= 180) & (cb >= 77) & (cb <= 135)).mean())
 
 
 def _cascade(name: str):
@@ -77,13 +91,15 @@ def find_faces(path: str, start: float = 0.0, end: Optional[float] = None, sampl
     span = max(0.1, end - start)
     det = _detector()
     eyes = _cascade("haarcascade_eye.xml")  # yazıları/desenleri yüz sanmayı önlemek için göz kontrolü
-    hits: list[tuple[float, float, float, float, int]] = []
+    hits: list[tuple] = []
     used = 0
     for i in range(samples):
         t = start + span * (i + 0.5) / samples
-        img = _frame(path, t)
-        if img is None:
+        col = _frame(path, t, color=True)
+        if col is None:
             continue
+        import cv2
+        img = cv2.cvtColor(col, cv2.COLOR_BGR2GRAY)
         used += 1
         h, w = img.shape[:2]
         faces = det.detectMultiScale(img, scaleFactor=1.1, minNeighbors=6,
@@ -91,20 +107,23 @@ def find_faces(path: str, start: float = 0.0, end: Optional[float] = None, sampl
         for (x, y, fw, fh) in faces:
             if fw < w * 0.025:  # sohbet yazısı gibi çok küçük "yüzler" gerçek kamera olamaz
                 continue
+            sk = _skin(col[y:y + fh, x:x + fw])
+            has_eyes = True
             if eyes is not None:
-                import cv2
                 # Göz modeli ~20 px altını göremez: yüzü 160 px genişliğe büyütüp üst kısmında göz ara
                 face_img = cv2.resize(img[y:y + fh, x:x + fw], (160, int(160 * fh / max(1, fw))))
                 top = face_img[: int(face_img.shape[0] * 0.6)]
-                found = eyes.detectMultiScale(top, scaleFactor=1.08, minNeighbors=3, minSize=(18, 18))
-                if len(found) == 0:
-                    continue
-            hits.append((float(x / w), float(y / h), float(fw / w), float(fh / h), i))
+                has_eyes = len(eyes.detectMultiScale(top, scaleFactor=1.08, minNeighbors=3, minSize=(18, 18))) > 0
+            # Göz bulunduysa ya da ten rengi belirginse kabul (kulaklık/ışık gözü gizleyebilir;
+            # gri kafatası gibi oyun figürlerinde ise ten rengi olmaz)
+            if not (has_eyes or sk >= 0.45):
+                continue
+            hits.append((float(x / w), float(y / h), float(fw / w), float(fh / h), i, sk))
     if not hits:
         return {"face": None, "frames": used}
 
     # Merkezleri birbirine yakın yüzleri grupla; en çok karede görüneni seç
-    groups: list[list[tuple[float, float, float, float, int]]] = []
+    groups: list[list[tuple]] = []
     for b in hits:
         cx, cy = b[0] + b[2] / 2, b[1] + b[3] / 2
         for g in groups:
@@ -117,7 +136,9 @@ def find_faces(path: str, start: float = 0.0, end: Optional[float] = None, sampl
             groups.append([b])
     frames_of = lambda g: len({b[4] for b in g})  # noqa: E731  (aynı karede çift algılamayı sayma)
     # En çok karede görünen; eşitse daha büyük yüz (kamera penceresi genelde en büyük sabit yüzdür)
-    best = max(groups, key=lambda g: (frames_of(g), sum(b[2] for b in g) / len(g)))
+    # Puan: görüldüğü kare sayısı × ten rengi (gri oyun figürleri geriye düşer); eşitse büyük yüz
+    skin_of = lambda g: sum(b[5] for b in g) / len(g)  # noqa: E731
+    best = max(groups, key=lambda g: (frames_of(g) * (0.35 + skin_of(g)), sum(b[2] for b in g) / len(g)))
     seen = frames_of(best)
     if seen < max(2, used // 4):  # tek karede görünen yüz büyük ihtimalle oyundaki bir karakter
         return {"face": None, "frames": used}

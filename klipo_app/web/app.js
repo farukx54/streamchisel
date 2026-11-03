@@ -387,6 +387,7 @@ $("lyDel").onclick = () => {
 async function detectCamera(silent) {
   if (!media) return;
   const st = $("detStat"); st.hidden = false; st.className = "status"; st.innerHTML = '<span class="spin"></span>Kamera aranıyor…';
+  toast("Kamera aranıyor…");
   $("bDetect").disabled = true;
   try {
     const { job } = await api("/api/detect", { path: media.path, start: P.range.start ?? 0, end: P.range.end ?? null });
@@ -406,6 +407,7 @@ async function detectCamera(silent) {
     }
     S.camera = r; save(); renderRects();
     st.className = "status ok"; st.innerHTML = `<span class="dot"></span>Kamera bulundu${ovl ? " ve pencereye oturtuldu" : ""}`;
+    toast(ovl ? "Kamera bulundu ve pencereye oturtuldu" : "Kamera bulundu");
   } catch (e) { st.textContent = "Kamera aranamadı: " + e.message; }
   finally { $("bDetect").disabled = false; }
 }
