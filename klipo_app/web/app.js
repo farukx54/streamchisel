@@ -1467,15 +1467,28 @@ async function findHighlights(opt = {}) {
   $("bHl").disabled = true; $("hlStat").className = "status"; $("hlStat").innerHTML = '<span class="spin"></span>Yayın taranıyor… %0';
   try {
     const words = T ? T.chunks.flat().map(w => ({ start: w.start, text: w.text })) : null;
-    const { job } = await api("/api/highlights", { path: media.path, start: a, end: b, clip_len: opt.len || +$("hlLen").value || 45, count: opt.count || +$("hlCount").value || 6, words });
+    const want = opt.len || +$("hlLen").value || 45;
+    const silP = S.silence && media.has_audio && !SIL ? analyzeSilence() : null;  // sessizlik kesimi açıksa klipler ona göre uzatılacak
+    const { job } = await api("/api/highlights", { path: media.path, start: a, end: b, clip_len: want, count: opt.count || +$("hlCount").value || 6, words });
     const j = await poll(job, (j) => { $("hlStat").innerHTML = `<span class="spin"></span>Yayın taranıyor… %${Math.round(j.progress * 100)}`; });
     if (j.error) throw new Error(j.error);
-    HL = j.result.items.map((h, i) => ({ ...h, id: uid(), n: i + 1, on: true })); HLCURVE = j.result.curve; HL.rangeA = a; HL.rangeB = b ?? media.duration;
+    if (silP) await silP;
+    HL = j.result.items.map((h, i) => ({ ...h, end: fitLen(h.start, h.end, want, b ?? media.duration), want, id: uid(), n: i + 1, on: true })); HLCURVE = j.result.curve; HL.rangeA = a; HL.rangeB = b ?? media.duration;
     $("hlStat").className = "status ok";
     $("hlStat").innerHTML = HL.length ? `<span class="dot"></span>${HL.length} an bulundu · zaman çizelgesinde kırmızı` : "Belirgin bir heyecan anı bulunamadı. Klip uzunluğunu kısaltmayı dene.";
     renderHl(); drawTimeline();
   } catch (e) { $("hlStat").className = "status"; $("hlStat").textContent = "Taranamadı: " + e.message; }
   finally { $("bHl").disabled = !media; }
+}
+// Sessizlik kesimi açıksa klip kısalır (ör. 45 sn → 30 sn). Bitişi, kesimlerden sonra
+// istenen uzunluk kalacak kadar ileri al (en fazla 2,5 katı ve videonun sonu).
+function keptLen(a, b) { return (b - a) - silenceSpans(a, b).reduce((t, [x, y]) => t + (y - x), 0); }
+function fitLen(a, b, want, lim) {
+  if (!S.silence || !SIL || !want) return b;
+  const max = Math.min(lim, a + want * 2.5);
+  let e = b;
+  for (let k = 0; k < 10 && e < max; k++) { const kept = keptLen(a, e); if (kept >= want - 0.5) break; e = Math.min(max, e + (want - kept)); }
+  return Math.round(e * 100) / 100;
 }
 function renderHl() {
   const box = $("hlList"); box.innerHTML = HL.length ? "" : '<div class="hint">Henüz tarama yapılmadı.</div>';
@@ -1484,7 +1497,7 @@ function renderHl() {
     const it = document.createElement("div"); it.className = "hl" + (h.on ? " sel" : "");
     const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = h.on; cb.setAttribute("aria-label", `An ${h.n} seçili`);
     cb.onchange = () => { h.on = cb.checked; renderHl(); };
-    const nm = document.createElement("span"); nm.innerHTML = `<b>An ${h.n}</b> <span class="hint">${fmt(h.start)} – ${fmt(h.end)}</span>`;
+    const nm = document.createElement("span"); nm.innerHTML = `<b>An ${h.n}</b> <span class="hint">${fmt(h.start)} – ${fmt(h.end)}</span> <span class="hint">· ≈${Math.round(keptLen(h.start, h.end))} sn</span>`;
     const lv = document.createElement("span"); lv.className = "lv " + (h.level === "çok yüksek" ? "l3" : h.level === "yüksek" ? "l2" : ""); lv.textContent = h.level;
     const acts = document.createElement("div"); acts.className = "acts";
     const b1 = document.createElement("button"); b1.type = "button"; b1.className = "btn tiny"; b1.textContent = "▶ Zirveyi izle";

@@ -84,6 +84,7 @@ D = [
 ("Klip: {0} – {1}", "Clip: {0} – {1}", "Клип: {0} – {1}"),
 ("· {0} sn", "· {0} s", "· {0} с"),
 ("→ kesimlerle ≈{0} sn", "→ ≈{0} s after cuts", "→ ≈{0} с после монтажа"),
+("· ≈{0} sn", "· ≈{0} s", "· ≈{0} с"),
 ("· uzun video, aralık seçmen önerilir", "· long video, selecting a range is recommended", "· длинное видео, лучше выбрать отрезок"),
 ("Turuncu çizgili: kesilecek sessizlik · Kırmızı çizgili: sildiğin parça · Ctrl+tekerlek: yakınlaştır", "Orange stripes: silence to be cut · Red stripes: parts you deleted · Ctrl+wheel: zoom", "Оранжевая штриховка: паузы на удаление · Красная: удалённые части · Ctrl+колесо: масштаб"),
 ("Klip başlangıcı", "Clip start", "Начало клипа"), ("Klip bitişi", "Clip end", "Конец клипа"),
