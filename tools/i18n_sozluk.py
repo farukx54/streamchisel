@@ -185,6 +185,8 @@ D = [
 ("Önizlemede örnek yazı gösteriliyor", "Sample text shown in the preview", "В превью показан пример текста"),
 ("Altyazı oluşturuluyor… %{0}", "Generating captions… {0}%", "Создание субтитров… {0}%"),
 ("Altyazı oluşturuluyor…", "Generating captions…", "Создание субтитров…"),
+("Altyazı modeli indiriliyor (yalnızca ilk sefer)…", "Downloading caption model (first time only)…", "Загрузка модели субтитров (только в первый раз)…"),
+("Model indiriliyor (ilk sefer) %{0}", "Downloading model (first time) {0}%", "Загрузка модели (первый раз) {0}%"),
 ("Altyazı oluşturulamadı: {0}", "Couldn't generate captions: {0}", "Не удалось создать субтитры: {0}"),
 ("Bu bölümde konuşma bulunamadı.", "No speech found in this part.", "В этом фрагменте нет речи."),
 ("{0} satır · {1} · {2}–{3}", "{0} lines · {1} · {2}–{3}", "Строк: {0} · {1} · {2}–{3}"),

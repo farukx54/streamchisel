@@ -223,6 +223,7 @@
 "Düzenle": "Edit",
 "Önizlemede örnek yazı gösteriliyor": "Sample text shown in the preview",
 "Altyazı oluşturuluyor…": "Generating captions…",
+"Altyazı modeli indiriliyor (yalnızca ilk sefer)…": "Downloading caption model (first time only)…",
 "Bu bölümde konuşma bulunamadı.": "No speech found in this part.",
 "Altyazıyı yeniden önizle": "Preview captions again",
 "Yayıncı etiketi": "Streamer tag",
@@ -542,6 +543,10 @@
 [
 "{0} an bulundu · zaman çizelgesinde kırmızı",
 "{0} moments found · shown in red on the timeline"
+],
+[
+"Model indiriliyor (ilk sefer) %{0}",
+"Downloading model (first time) {0}%"
 ],
 [
 "Son çalışmaya devam et: {0}",

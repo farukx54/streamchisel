@@ -131,7 +131,8 @@ def render(project, on_event: EventCb = None) -> dict:
                     words, lang = subs.transcribe(
                         src, start, end, sub_cfg["model"], sub_cfg.get("language"),
                         on_progress=lambda p: emit({"stage": "transcribe", "progress": p}),
-                        task="translate" if sub_cfg.get("translate") else "transcribe")
+                        task="translate" if sub_cfg.get("translate") else "transcribe",
+                        on_download=lambda: emit({"stage": "model", "progress": 0.0}))
                     words = subs.remap_words(words, keeps)
                     chunks = subs.chunk_words(words, int(sub_cfg.get("max_words", 3)))
                     word_level = bool(sub_cfg.get("word_highlight", True))

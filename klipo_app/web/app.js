@@ -736,7 +736,7 @@ async function runTranscribe() {
   $("bTr").disabled = true; $("trStat").className = "status"; $("trStat").innerHTML = '<span class="spin"></span>Altyazı oluşturuluyor… %0';
   try {
     const { job } = await api("/api/transcribe", { path: media.path, start: a, end: b, model: S.model, language: S.lang || null, translate: S.translate });
-    const j = await poll(job, (j) => { $("trStat").innerHTML = `<span class="spin"></span>Altyazı oluşturuluyor… %${Math.round(j.progress * 100)}`; });
+    const j = await poll(job, (j) => { $("trStat").innerHTML = j.stage === "model" ? '<span class="spin"></span>Altyazı modeli indiriliyor (yalnızca ilk sefer)…' : `<span class="spin"></span>Altyazı oluşturuluyor… %${Math.round(j.progress * 100)}`; });
     if (j.error) throw new Error(j.error);
     const r = j.result;
     T = { start: r.start, end: r.end ?? media.duration, language: r.language, chunks: chunkWords(r.words) };
@@ -1278,8 +1278,8 @@ $("fDl").onsubmit = async (e) => {
 };
 
 // ================================================================== dışa aktarma
-const STAGE = { queued: "Sıraya alındı…", silence: "Kesimler hesaplanıyor…", transcribe: "Altyazı oluşturuluyor…", render: "Video oluşturuluyor…", done: "Bitti", error: "Hata" };
-const WEIGHT = { silence: [0, .05], transcribe: [.05, .45], render: [.45, 1] };
+const STAGE = { queued: "Sıraya alındı…", silence: "Kesimler hesaplanıyor…", model: "Altyazı modeli indiriliyor (yalnızca ilk sefer)…", transcribe: "Altyazı oluşturuluyor…", render: "Video oluşturuluyor…", done: "Bitti", error: "Hata" };
+const WEIGHT = { silence: [0, .05], model: [.05, .05], transcribe: [.05, .45], render: [.45, 1] };
 const transcriptCovers = (a, b) => T && T.start <= a + 0.5 && T.end >= b - 0.5;
 function project(over = {}) {
   const rng = over.range || P.range;
@@ -1361,7 +1361,7 @@ async function refreshQueue() {
   clearTimeout(qTimer);
   if (open || $("dQueue").open) qTimer = setTimeout(refreshQueue, 1200);
 }
-const QSTAGE = { queued: "Sırada", silence: "Kesimler", transcribe: "Altyazı", render: "Video", done: "Hazır", error: "Hata" };
+const QSTAGE = { queued: "Sırada", silence: "Kesimler", model: "Model indiriliyor (ilk sefer)", transcribe: "Altyazı", render: "Video", done: "Hazır", error: "Hata" };
 function renderQueue() {
   const box = $("qList"); box.innerHTML = QJOBS.length ? "" : '<div class="hint">Kuyruk boş.</div>';
   for (const j of [...QJOBS].reverse()) {

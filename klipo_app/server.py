@@ -143,7 +143,8 @@ def job_transcribe(path: str, start: float, end: float | None, model: str, langu
         emit({"stage": "transcribe", "progress": 0.0})
         words, lang = transcribe(path, start or 0.0, end, model, language or None,
                                  on_progress=lambda p: emit({"stage": "transcribe", "progress": p}),
-                                 task="translate" if translate else "transcribe")
+                                 task="translate" if translate else "transcribe",
+                                 on_download=lambda: emit({"stage": "model", "progress": 0.0}))
         off = start or 0.0  # arayüz kaynak videonun mutlak zamanlarıyla çalışır
         return {"language": lang, "start": off, "end": end,
                 "words": [{"start": round(w.start + off, 3), "end": round(w.end + off, 3), "text": w.text}

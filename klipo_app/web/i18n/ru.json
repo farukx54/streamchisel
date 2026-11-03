@@ -223,6 +223,7 @@
 "Düzenle": "Изменить",
 "Önizlemede örnek yazı gösteriliyor": "В превью показан пример текста",
 "Altyazı oluşturuluyor…": "Создание субтитров…",
+"Altyazı modeli indiriliyor (yalnızca ilk sefer)…": "Загрузка модели субтитров (только в первый раз)…",
 "Bu bölümde konuşma bulunamadı.": "В этом фрагменте нет речи.",
 "Altyazıyı yeniden önizle": "Обновите предпросмотр субтитров",
 "Yayıncı etiketi": "Тег стримера",
@@ -542,6 +543,10 @@
 [
 "{0} an bulundu · zaman çizelgesinde kırmızı",
 "Найдено моментов: {0} · отмечены красным на таймлайне"
+],
+[
+"Model indiriliyor (ilk sefer) %{0}",
+"Загрузка модели (первый раз) {0}%"
 ],
 [
 "Son çalışmaya devam et: {0}",

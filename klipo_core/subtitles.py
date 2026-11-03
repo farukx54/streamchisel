@@ -42,23 +42,60 @@ def models_dir() -> Path:
     return d
 
 
-def _load_model(name: str):
+_MODELS: dict = {}  # yüklenen model süreç boyunca saklanır (her klipte yeniden yüklenmesin)
+
+
+def _cuda_ok() -> bool:
+    try:
+        import ctranslate2
+        return ctranslate2.get_cuda_device_count() > 0
+    except Exception:
+        return False
+
+
+def _cpu_threads() -> int:
+    n = os.cpu_count() or 4
+    return max(2, min(8, n - 1 if n > 4 else n))
+
+
+def _ensure_local(name: str, on_download: Optional[Callable[[], None]] = None) -> str:
+    """Model diskte yoksa (ilk kullanım) indirir; yerel klasör yolunu döndürür."""
+    if Path(name).exists():
+        return name
+    from faster_whisper.utils import download_model
+    try:
+        return download_model(name, local_files_only=True, cache_dir=str(models_dir()))
+    except Exception:
+        if on_download:
+            on_download()
+        return download_model(name, cache_dir=str(models_dir()))
+
+
+def _load_model(name: str, on_download: Optional[Callable[[], None]] = None):
     from faster_whisper import WhisperModel  # ağır içe aktarma; sadece gerekince
 
-    local = Path(name)
-    target = str(local) if local.exists() else name
-    try:
-        return WhisperModel(target, device="cuda", compute_type="float16",
-                            download_root=str(models_dir()))
-    except Exception:
-        return WhisperModel(target, device="cpu", compute_type="int8",
-                            download_root=str(models_dir()))
+    if name in _MODELS:
+        return _MODELS[name]
+    target = _ensure_local(name, on_download)
+    m = None
+    if _cuda_ok():
+        try:
+            m = WhisperModel(target, device="cuda", compute_type="float16")
+            m._sc_gpu = True
+        except Exception:
+            m = None
+    if m is None:
+        m = WhisperModel(target, device="cpu", compute_type="int8", cpu_threads=_cpu_threads())
+    _MODELS.clear()  # bellekte tek model tut
+    _MODELS[name] = m
+    return m
 
 
 def transcribe(path: str, start: float, end: Optional[float], model: str = "small",
                language: Optional[str] = None,
                on_progress: Optional[Callable[[float], None]] = None,
-               task: str = "transcribe") -> tuple[list[Word], str]:
+               task: str = "transcribe",
+               on_download: Optional[Callable[[], None]] = None) -> tuple[list[Word], str]:
     """Klip aralığının sesini yazıya çevirir. Zamanlar klip başına göredir.
 
     task="translate": konuşma hangi dilde olursa olsun İngilizce altyazı üretir (çevrimdışı).
@@ -80,19 +117,35 @@ def transcribe(path: str, start: float, end: Optional[float], model: str = "smal
     audio = np.frombuffer(proc.stdout, dtype=np.float32).copy()
     if audio.size == 0:
         return [], language or "tr"
-    m = _load_model(model)
-    segments, info = m.transcribe(audio, language=language, word_timestamps=True,
-                                  vad_filter=True, beam_size=5,
-                                  task="translate" if task == "translate" else "transcribe")
+    m = _load_model(model, on_download)
+    kw = dict(language=language, word_timestamps=True, vad_filter=True, beam_size=5,
+              task="translate" if task == "translate" else "transcribe")
+    try:
+        segments, info = m.transcribe(audio, **kw)
+        segments = list(_progress(segments, info, on_progress))
+    except Exception:
+        # Ekran kartı (CUDA) kütüphanesi eksik/bozuksa işlemciyle tekrar dene
+        if not getattr(m, "_sc_gpu", False):
+            raise
+        from faster_whisper import WhisperModel
+        m = WhisperModel(_ensure_local(model), device="cpu", compute_type="int8", cpu_threads=_cpu_threads())
+        _MODELS.clear(); _MODELS[model] = m
+        segments, info = m.transcribe(audio, **kw)
+        segments = list(_progress(segments, info, on_progress))
     words: list[Word] = []
     for seg in segments:
         for w in seg.words or []:
             t = w.word.strip()
             if t:
                 words.append(Word(float(w.start), float(w.end), t))
+    return words, ("en" if task == "translate" else info.language)
+
+
+def _progress(segments, info, on_progress):
+    for seg in segments:
         if on_progress and info.duration:
             on_progress(min(1.0, seg.end / info.duration))
-    return words, ("en" if task == "translate" else info.language)
+        yield seg
 
 
 # --------------------------------------------------------------------------- SRT
