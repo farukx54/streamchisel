@@ -58,15 +58,16 @@ jobs:
       - name: Paketle (PyInstaller)
         run: pyinstaller paketleme/streamchisel.spec --noconfirm --distpath dist --workpath build
 
-      - name: Paketlenmiş program açılıyor mu
+      - name: Paketlenmiş programı gerçek işlerle dene
         shell: pwsh
         run: |
           $env:KLIPO_NO_UI = "1"
           $p = Start-Process dist\Streamchisel\Streamchisel.exe -PassThru
-          Start-Sleep -Seconds 15
-          $r = Invoke-WebRequest http://127.0.0.1:47321/api/license -UseBasicParsing
-          $r.Content
+          python paketleme/paket_testi.py
+          $code = $LASTEXITCODE
           Stop-Process -Id $p.Id -Force
+          Get-Content "$env:USERPROFILE\.streamchisel\streamchisel.log" -Tail 40 -ErrorAction SilentlyContinue
+          if ($code -ne 0) { exit 1 }
 
       - name: Kurulum sihirbazı (Inno Setup)
         shell: pwsh

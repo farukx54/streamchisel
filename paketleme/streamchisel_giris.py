@@ -45,24 +45,32 @@ def main() -> None:
 
     url = _running_instance()
     if url:  # zaten açık: sadece pencereyi göster
-        open_window(url)
+        open_window(url, own_profile=True)
         return
     lic.refresh_in_background()
     srv, url = start_server()
     print("Streamchisel çalışıyor:", url, flush=True)
-    win = None if os.environ.get("KLIPO_NO_UI") == "1" else open_window(url, own_profile=True)
-    if win is None:  # Edge yok (varsayılan tarayıcı açıldı) ya da test: program açık kalır
+    if os.environ.get("KLIPO_NO_UI") != "1":
+        open_window(url, own_profile=True)
+    else:  # test: pencere yok, sonsuza kadar çalış
         while True:
             time.sleep(3600)
-    win.wait()
-    # Pencere kapandı: devam eden dışa aktarma varsa bitmesini bekle
+    # Pencere açık olduğu sürece arayüz birkaç saniyede bir sinyal gönderir. Sinyal 25 sn
+    # kesilirse (pencere kapandı) ve devam eden dışa aktarma yoksa program kapanır.
+    # Edge'in kendi süreci izlenmez: pencere kapansa da Edge arka planda kalabiliyor.
     from klipo_app import server as s
-    for _ in range(3600):
+    started = time.time()
+    while True:
+        time.sleep(2)
+        quiet = time.time() - s._last_seen["t"]
+        if time.time() - started < 90 and quiet < 90:  # pencere ilk açılırken acele etme
+            continue
+        if quiet < 25:
+            continue
         with s._lock:
-            busy = any(not j["done"] for j in s._jobs.values() if j["kind"] in ("render", "thumbnail"))
+            busy = any(not j["done"] for j in s._jobs.values())
         if not busy:
             break
-        time.sleep(1)
     srv.shutdown()
     os._exit(0)
 

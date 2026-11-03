@@ -1455,7 +1455,8 @@ $("bSug").onclick = async () => {
 let HL = [], HLCURVE = [];
 function syncAnlar() {
   $("bHl").disabled = !media;
-  if (!media) $("hlStat").textContent = "Önce bir video aç.";
+  if (!media) { $("hlStat").className = "status"; $("hlStat").textContent = "Önce bir video aç."; }
+  else if (!HL.length && !$("hlStat").querySelector(".spin")) { $("hlStat").className = "status"; $("hlStat").textContent = `Hazır · ${fmt(media.duration)} video. Taramak için butona bas.`; }
   renderHl();
 }
 async function findHighlights(opt = {}) {
@@ -1551,7 +1552,12 @@ $("fProj").onsubmit = async (e) => {
 $("projPick").onclick = async () => { try { const r = await api("/api/project/pick", {}); if (r.path) openProject(r.path, true); } catch (e) { toast(e.message); } };
 document.addEventListener("keydown", (e) => { if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") { e.preventDefault(); $("bProj").click(); } });
 setInterval(() => { if (media) api("/api/autosave", { data: projectData() }).catch(() => {}); }, 20000);
-window.addEventListener("beforeunload", () => { if (media) navigator.sendBeacon?.("/api/autosave", new Blob([JSON.stringify({ data: projectData() })], { type: "application/json" })); });
+window.addEventListener("beforeunload", () => {
+  if (media) navigator.sendBeacon?.("/api/autosave", new Blob([JSON.stringify({ data: projectData() })], { type: "application/json" }));
+  navigator.sendBeacon?.("/api/bye", new Blob(["{}"], { type: "application/json" }));
+});
+// Program, pencere açık olduğu sürece çalışır: birkaç saniyede bir "buradayım" sinyali
+setInterval(() => { fetch("/api/ping").catch(() => {}); }, 5000);
 $("bDemo").onclick = async () => {
   try { const r = await api("/api/demo", {}); loadProject(r.data); toast("Örnek yayın açıldı — Dışa aktar'a basıp sonucu gör ya da ✨ Hızlı klip'i dene"); }
   catch (e) { toast(e.message); }

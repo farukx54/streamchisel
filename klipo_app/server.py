@@ -61,6 +61,7 @@ def is_allowed(path: str) -> bool:
 
 # --------------------------------------------------------------------------- işler (arka plan)
 
+_last_seen = {"t": time.time()}  # pencereden son sinyal (Setup sürümü kapanmak için buna bakar)
 _render_sem = threading.Semaphore(1)  # dışa aktarmalar sırayla: bilgisayar kasılmasın
 
 
@@ -516,6 +517,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if not self._check_origin():
             return
+        _last_seen["t"] = time.time()
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         try:
@@ -539,6 +541,8 @@ class Handler(BaseHTTPRequestHandler):
                     job = _jobs.get(jid)
                     data = json.loads(json.dumps(job)) if job else None
                 return self._json(data or {"error": "iş bulunamadı"}, 200 if data else 404)
+            if u.path == "/api/ping":
+                return self._json({"ok": True})
             if u.path == "/api/license":
                 return self._json({**lic.status(), "update": lic.cached_update(), "version": __import__("klipo_core").__version__})
             if u.path == "/api/jobs":
@@ -596,11 +600,15 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if not self._check_origin():
             return
+        _last_seen["t"] = time.time()
         u = urlparse(self.path)
         try:
             if u.path == "/api/upload":  # sürükle-bırak: dosya gövdede akarak gelir
                 return self._json(self._upload())
             b = self._body()
+            if u.path == "/api/bye":  # pencere kapanıyor: birkaç saniye içinde yeniden bağlanmazsa program kapanır
+                _last_seen["t"] = time.time() - 20
+                return self._json({"ok": True})
             if u.path == "/api/log":  # arayüz hataları komut penceresine yazılır (destek için)
                 print(f"[ARAYÜZ HATASI] {str(b.get('msg'))[:500]}\n{str(b.get('stack'))[:1500]}", flush=True)
                 return self._json({"ok": True})
@@ -878,8 +886,22 @@ def open_window(url: str, own_profile: bool = False):
     return None
 
 
+def preload() -> None:
+    """Ağır kütüphaneleri (numpy, OpenCV) arka plan işleri başlamadan, tek seferde yükler.
+
+    Video açılınca kamera arama, ses dalgası ve en iyi anlar aynı anda başlar. Paketlenmiş
+    sürümde bu kütüphaneler ilk kez aynı anda iki iş parçacığından yüklenirse çakışıyor
+    ("cannot load module more than once per process"). Açılışta bir kez yüklemek bunu önler."""
+    for mod in ("numpy", "cv2"):
+        try:
+            __import__(mod)
+        except Exception as e:  # eksikse ilgili özellik kendi hatasını gösterir
+            print(f"[ön yükleme] {mod}: {e}", flush=True)
+
+
 def start_server(port: int | None = None):
     """Sunucuyu arka planda başlatır; (sunucu, adres) döndürür."""
+    preload()
     port = port or free_port()
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
@@ -887,6 +909,7 @@ def start_server(port: int | None = None):
 
 
 def main(open_ui: bool = True) -> None:
+    preload()
     lic.refresh_in_background()  # lisans kontrolü ve güncelleme bilgisi (internet yoksa sessiz)
     port = free_port()
     srv = ThreadingHTTPServer(("127.0.0.1", port), Handler)
