@@ -29,20 +29,28 @@
   }
   I18N.t = tr;
 
-  const orig = new WeakMap();  // her metin düğümünün Türkçe aslı (dil değişince geri dönebilmek için)
+  // Her metin düğümü / özellik için: Türkçe aslı ve en son bizim yazdığımız değer.
+  // Ekrandaki değer ikisinden de farklıysa uygulama yeni bir metin yazmıştır → yeni asıl budur.
+  // (Yalnızca "şu anki dilin çevirisi" ile karşılaştırmak dil değiştirirken eski dili asıl sanıyordu.)
+  const orig = new WeakMap();
   function doText(n) {
-    let src = orig.get(n);
-    if (src === undefined || (n.nodeValue !== src && n.nodeValue !== tr(src))) { src = n.nodeValue; orig.set(n, src); }
-    const want = tr(src);
+    let o = orig.get(n);
+    if (!o || (n.nodeValue !== o.src && n.nodeValue !== o.out)) { o = { src: n.nodeValue, out: n.nodeValue }; orig.set(n, o); }
+    const want = tr(o.src);
+    o.out = want;
     if (n.nodeValue !== want) n.nodeValue = want;
   }
+  const origAttr = new WeakMap();
   function doEl(el) {
     for (const a of ATTRS) {
       if (!el.hasAttribute(a)) continue;
-      const key = "data-tr-" + a, cur = el.getAttribute(a);
-      let src = el.getAttribute(key);
-      if (src === null || (cur !== src && cur !== tr(src))) { src = cur; el.setAttribute(key, src); }
-      const want = tr(src);
+      let m = origAttr.get(el);
+      if (!m) { m = {}; origAttr.set(el, m); }
+      const cur = el.getAttribute(a);
+      let o = m[a];
+      if (!o || (cur !== o.src && cur !== o.out)) { o = m[a] = { src: cur, out: cur }; }
+      const want = tr(o.src);
+      o.out = want;
       if (cur !== want) el.setAttribute(a, want);
     }
   }
