@@ -123,12 +123,21 @@ def encoder_args(encoder: str, quality: str) -> list[str]:
 
 def run_with_progress(args: list[str], total_seconds: float, on_progress: ProgressCb = None,
                       cwd: Optional[str] = None) -> None:
-    """ffmpeg'i -progress ile çalıştırır, 0..1 arası ilerleme bildirir."""
-    cmd = [args[0], "-hide_banner", "-nostats", "-progress", "pipe:1"] + args[1:]
+    """ffmpeg'i -progress ile çalıştırır, 0..1 arası ilerleme bildirir.
+
+    Hata çıktısı ayrı bir iş parçacığında sürekli okunur: Windows'ta boru tamponu küçüktür
+    (4 KB); okunmazsa ffmpeg yazmak için bekler, biz de onu bekleriz ve ikisi kilitlenir."""
+    import collections
+    import threading
+
+    cmd = [args[0], "-hide_banner", "-nostats", "-loglevel", "warning", "-progress", "pipe:1"] + args[1:]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                             encoding="utf-8", errors="replace", creationflags=_CREATE_FLAGS,
                             cwd=cwd)
-    assert proc.stdout is not None
+    assert proc.stdout is not None and proc.stderr is not None
+    tail: collections.deque = collections.deque(maxlen=200)
+    reader = threading.Thread(target=lambda: tail.extend(proc.stderr), daemon=True)
+    reader.start()
     for line in proc.stdout:
         if line.startswith("out_time_us=") and on_progress and total_seconds > 0:
             try:
@@ -136,8 +145,9 @@ def run_with_progress(args: list[str], total_seconds: float, on_progress: Progre
                 on_progress(max(0.0, min(1.0, t / total_seconds)))
             except ValueError:
                 pass
-    stderr = proc.stderr.read() if proc.stderr else ""
-    if proc.wait() != 0:
-        raise RuntimeError("ffmpeg hatası:\n" + stderr[-3000:])
+    code = proc.wait()
+    reader.join(timeout=5)
+    if code != 0:
+        raise RuntimeError("ffmpeg hatası:\n" + "".join(tail)[-3000:])
     if on_progress:
         on_progress(1.0)

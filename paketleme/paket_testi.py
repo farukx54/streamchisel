@@ -19,8 +19,9 @@ def call(path, body=None):
         return json.loads(r.read().decode("utf-8"))
 
 
-def wait(job, name, limit=600):
+def wait(job, name, limit=300):
     t0 = time.time()
+    j = {}
     while time.time() - t0 < limit:
         j = call(f"/api/job/{job}")
         if j.get("done"):
@@ -30,7 +31,7 @@ def wait(job, name, limit=600):
             print(f"tamam {name} ({time.time() - t0:.1f} sn)")
             return j["result"]
         time.sleep(1)
-    print(f"HATA {name}: zaman aşımı")
+    print(f"HATA {name}: zaman aşımı (son durum: {j.get('stage')} %{round(100 * j.get('progress', 0))})")
     return None
 
 
