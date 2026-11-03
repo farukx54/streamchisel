@@ -67,12 +67,17 @@ r = wait(call("/api/render", {"project": proj, "label": "test"})["job"], "dışa
 ok = ok and r is not None
 if r:
     print("çıktı:", r["output"], r["duration"], "sn, kodlayıcı:", r["encoder"])
-# Otomatik altyazı (varsayılan "small" model): 1. sefer model indirilir, 2. sefer bellekteki model kullanılır
-for i in (1, 2):
-    tr = wait(call("/api/transcribe", {"path": path, "start": 0, "end": 45, "model": "small", "language": None})["job"],
-              f"altyazı 45 sn ({i}. sefer)", limit=900)
+# Otomatik altyazı hızı (varsayılan "small" model). 1. sefer model indirilir, 2. sefer bellekteki model kullanılır.
+# Konuşmalı video (CI'da Windows konuşma sentezi) varsa gerçekçi ölçüm onunla yapılır.
+import os
+sp = os.environ.get("KONUSMA_VIDEO")
+tpath = call("/api/open", {"path": sp})["path"] if sp and os.path.exists(sp) else path
+for i, model in ((1, "small"), (2, "small"), (3, "base")):
+    t0 = time.time()
+    tr = wait(call("/api/transcribe", {"path": tpath, "start": 0, "end": 45, "model": model, "language": None})["job"],
+              f"altyazı 45 sn, model {model} ({i}. çalıştırma)", limit=900)
     ok = ok and tr is not None
     if tr:
-        print("  dil:", tr["language"], "kelime:", len(tr["words"]))
+        print("  dil:", tr["language"], "kelime:", len(tr["words"]), "->", " ".join(w["text"] for w in tr["words"][:14]))
 print("SONUÇ:", "BAŞARILI" if ok else "BAŞARISIZ")
 sys.exit(0 if ok else 1)

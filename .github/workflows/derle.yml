@@ -66,6 +66,14 @@ jobs:
       - name: Paketlenmiş programı gerçek işlerle dene
         shell: pwsh
         run: |
+          # Gerçekçi altyazı hız testi için Windows'un konuşma sentezinden ~45 sn konuşmalı video
+          Add-Type -AssemblyName System.Speech
+          $sp = New-Object System.Speech.Synthesis.SpeechSynthesizer
+          $sp.SetOutputToWaveFile("$pwd\konusma.wav")
+          $metin = "Hello everyone and welcome back to the stream. Today we are going to finish this level, it is almost done. Oh my god, did you see that jump? That was incredible. Let us try one more time, I think we can beat the boss right now. Thank you for the follow and thank you for the support, chat. We just broke our record, guys, this is amazing. Do not forget to follow the channel. See you in the next stream, bye bye."
+          $sp.Speak($metin); $sp.Speak($metin); $sp.Dispose()
+          bin\ffmpeg.exe -v error -y -f lavfi -i "color=c=gray:s=1280x720:r=30" -i konusma.wav -shortest -c:v libx264 -preset ultrafast -c:a aac konusma.mp4
+          $env:KONUSMA_VIDEO = "$pwd\konusma.mp4"
           $env:KLIPO_NO_UI = "1"
           $p = Start-Process dist\Streamchisel\Streamchisel.exe -PassThru
           python paketleme/paket_testi.py

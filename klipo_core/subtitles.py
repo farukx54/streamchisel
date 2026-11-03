@@ -118,7 +118,12 @@ def transcribe(path: str, start: float, end: Optional[float], model: str = "smal
     if audio.size == 0:
         return [], language or "tr"
     m = _load_model(model, on_download)
-    kw = dict(language=language, word_timestamps=True, vad_filter=True, beam_size=5,
+    # Hız ayarları: oyun sesi/müzik gibi konuşma olmayan yerlerde Whisper sıcaklığı artırarak
+    # aynı parçayı 6 kez yeniden çözmeye çalışır; 3 denemeyle sınırlıyoruz. Önceki metne
+    # bağlamamak da tekrar eden "hayalet" yazıları ve uzun takılmaları önler.
+    kw = dict(language=language, word_timestamps=True, vad_filter=True,
+              beam_size=1 if model in ("base", "tiny") else 5,
+              temperature=(0.0, 0.4, 0.8), condition_on_previous_text=False,
               task="translate" if task == "translate" else "transcribe")
     try:
         segments, info = m.transcribe(audio, **kw)
