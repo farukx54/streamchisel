@@ -1,0 +1,212 @@
+[
+ {
+  "id": "whoosh",
+  "label": "Whoosh geçiş",
+  "category": "Geçiş",
+  "duration": 0.7
+ },
+ {
+  "id": "vurus",
+  "label": "Vuruş",
+  "category": "Vuruş",
+  "duration": 0.55
+ },
+ {
+  "id": "ding",
+  "label": "Ding",
+  "category": "Arayüz",
+  "duration": 1.2
+ },
+ {
+  "id": "pop",
+  "label": "Pop",
+  "category": "Arayüz",
+  "duration": 0.14
+ },
+ {
+  "id": "yukselis",
+  "label": "Yükseliş",
+  "category": "Geçiş",
+  "duration": 1.6
+ },
+ {
+  "id": "korna",
+  "label": "Korna",
+  "category": "Komik",
+  "duration": 0.95
+ },
+ {
+  "id": "basari",
+  "label": "Başarı",
+  "category": "Oyun",
+  "duration": 0.81
+ },
+ {
+  "id": "hata",
+  "label": "Hata",
+  "category": "Oyun",
+  "duration": 0.5
+ },
+ {
+  "id": "tik",
+  "label": "Tık",
+  "category": "Arayüz",
+  "duration": 0.06
+ },
+ {
+  "id": "davul",
+  "label": "Davul gerilimi",
+  "category": "Gerilim",
+  "duration": 1.4
+ },
+ {
+  "id": "kalp_atisi",
+  "label": "Kalp atışı",
+  "category": "Gerilim",
+  "duration": 1.8
+ },
+ {
+  "id": "lazer",
+  "label": "Lazer",
+  "category": "Oyun",
+  "duration": 0.35
+ },
+ {
+  "id": "boing",
+  "label": "Boing",
+  "category": "Komik",
+  "duration": 0.8
+ },
+ {
+  "id": "para",
+  "label": "Para",
+  "category": "Oyun",
+  "duration": 0.47
+ },
+ {
+  "id": "seviye_atla",
+  "label": "Seviye atla",
+  "category": "Oyun",
+  "duration": 0.73
+ },
+ {
+  "id": "patlama",
+  "label": "Patlama",
+  "category": "Vuruş",
+  "duration": 1.8
+ },
+ {
+  "id": "kilic",
+  "label": "Kılıç",
+  "category": "Vuruş",
+  "duration": 1.1
+ },
+ {
+  "id": "kamera",
+  "label": "Deklanşör",
+  "category": "Arayüz",
+  "duration": 0.35
+ },
+ {
+  "id": "dusme",
+  "label": "Düşüş",
+  "category": "Komik",
+  "duration": 1.5
+ },
+ {
+  "id": "slayt_dudugu",
+  "label": "Düdük",
+  "category": "Komik",
+  "duration": 0.75
+ },
+ {
+  "id": "kapi_zili",
+  "label": "Kapı zili",
+  "category": "Arayüz",
+  "duration": 1.8
+ },
+ {
+  "id": "alkis",
+  "label": "Alkış",
+  "category": "Komik",
+  "duration": 2.6
+ },
+ {
+  "id": "glitch",
+  "label": "Glitch",
+  "category": "Geçiş",
+  "duration": 0.6
+ },
+ {
+  "id": "bas_dusus",
+  "label": "Bas düşüşü",
+  "category": "Geçiş",
+  "duration": 1.4
+ },
+ {
+  "id": "plak_cizik",
+  "label": "Plak cızırtısı",
+  "category": "Komik",
+  "duration": 0.55
+ },
+ {
+  "id": "bildirim",
+  "label": "Bildirim",
+  "category": "Arayüz",
+  "duration": 0.55
+ },
+ {
+  "id": "geri_sayim",
+  "label": "Geri sayım",
+  "category": "Gerilim",
+  "duration": 3.8
+ },
+ {
+  "id": "sihir",
+  "label": "Sihir",
+  "category": "Geçiş",
+  "duration": 1.6
+ },
+ {
+  "id": "titresim",
+  "label": "Titreşim",
+  "category": "Arayüz",
+  "duration": 1.1
+ },
+ {
+  "id": "damla",
+  "label": "Damla",
+  "category": "Arayüz",
+  "duration": 0.22
+ },
+ {
+  "id": "ruzgar",
+  "label": "Rüzgâr",
+  "category": "Geçiş",
+  "duration": 2.4
+ },
+ {
+  "id": "gerilim",
+  "label": "Gerilim",
+  "category": "Gerilim",
+  "duration": 3.2
+ },
+ {
+  "id": "dramatik",
+  "label": "Dramatik",
+  "category": "Gerilim",
+  "duration": 2.4
+ },
+ {
+  "id": "yanlis_cevap",
+  "label": "Üzgün trombon",
+  "category": "Komik",
+  "duration": 2.5
+ },
+ {
+  "id": "daktilo",
+  "label": "Daktilo",
+  "category": "Arayüz",
+  "duration": 1.5
+ }
+]

@@ -1,0 +1,2 @@
+Bu ses efektleri Streamchisel için tools/sfx_uret.py ile sıfırdan sentezlenmiştir.
+Kullanıcılar ürettikleri videolarda serbestçe kullanabilir.

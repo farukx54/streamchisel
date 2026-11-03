@@ -1,0 +1,9 @@
+# Üst klasördeki sitenin (ör. public_html/.htaccess) yönlendirme kuralları bu klasörde çalışmasın
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+</IfModule>
+Options -Indexes
+# Sadece api.php, admin.php ve kurulumda install.php dışarıdan açılabilir
+<FilesMatch "^(common|config_path)\.php$">
+  Require all denied
+</FilesMatch>

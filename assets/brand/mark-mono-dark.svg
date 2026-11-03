@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Streamchisel">
+  <path d="M25.5 11H35.5L44 19.5V48.5Q44 53 39.5 53H25.5Q21 53 21 48.5V15.5Q21 11 25.5 11Z" fill="none" stroke="#C8F135" stroke-width="4.2" stroke-linejoin="round"/>
+  <path d="M42.5 8.5L47.5 7L46 12Z" fill="#C8F135"/><path d="M49.5 13.5L53 13L51.5 16.5Z" fill="#C8F135"/>
+  <path d="M29 24.5L38.5 32L29 39.5Z" fill="#C8F135" stroke="#C8F135" stroke-width="1.6" stroke-linejoin="round"/>
+</svg>

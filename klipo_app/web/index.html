@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Streamchisel</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/fonts/fonts.css">
+<style>
+@font-face { font-family: "Poppins"; font-weight: 700; src: url("/fonts/Poppins-Bold.ttf") format("truetype"); }
+:root {
+  --bg: #0E0F11; --bar: #131518; --panel: #16181C; --panel2: #1D2026; --line: #2A2E36; --line2: #3A3F49;
+  --text: #ECEEF2; --muted: #9AA1AD; --accent: #C8F135; --accent-ink: #0E0F11;
+  --cam: #5AA9FF; --game: #C8F135; --focus: #FF8A3D; --zoom: #FF8A3D; --danger: #FF6B6B; --fx: #B26BFF; --mus: #3FD0FF;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font: 14px/1.4 "Segoe UI", system-ui, sans-serif; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.app { display: grid; grid-template-rows: auto 1fr; height: 100vh; }
+
+header { display: flex; align-items: center; gap: 14px; padding: 10px 16px; background: var(--bar); border-bottom: 1px solid var(--line); }
+.logo { display: flex; align-items: center; gap: 10px; font-family: Poppins, sans-serif; font-size: 20px; letter-spacing: -.02em; }
+.logo img { display: block; border-radius: 8px; }
+.file { display: flex; flex-direction: column; padding-left: 14px; border-left: 1px solid var(--line); min-width: 0; }
+.file b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 34vw; }
+.file span { color: var(--muted); font-size: 12px; }
+.spacer { flex: 1; }
+.btn { height: 38px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel2); font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap; }
+.btn:hover:not(:disabled) { border-color: var(--line2); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border: none; font-weight: 700; }
+.btn.small { height: 32px; padding: 0 10px; font-size: 12px; }
+.btn.tiny { height: 26px; padding: 0 8px; font-size: 11px; border-radius: 6px; }
+.btn.ghost { background: transparent; }
+.btn.wide { width: 100%; }
+.btn.danger { color: var(--danger); }
+
+.body { display: grid; grid-template-columns: 76px 330px 1fr; min-height: 0; }
+nav.rail { background: var(--bar); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; padding: 10px 6px; }
+.tabb { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 9px 2px; border-radius: 10px; border: none; background: transparent; color: var(--muted); font-size: 11px; font-weight: 600; }
+.tabb svg { width: 22px; height: 22px; }
+.tabb:hover { color: var(--text); background: var(--panel2); }
+.tabb[aria-selected="true"] { color: var(--accent-ink); background: var(--accent); }
+aside { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; padding: 16px; }
+.tab { display: flex; flex-direction: column; gap: 18px; }
+.tab h2 { margin: 0; font-family: Poppins, sans-serif; font-size: 18px; }
+.sec { display: flex; flex-direction: column; gap: 10px; }
+.sec h3 { margin: 0; font-size: 12px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.packs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pack { display: flex; flex-direction: column; gap: 5px; padding: 6px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel2); text-align: left; font-size: 11px; }
+.pack:hover { border-color: var(--line2); }
+.pack.on { border-color: var(--accent); background: rgba(200,241,53,.08); }
+.pack .pv { position: relative; aspect-ratio: 9/14; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; }
+.pack .pv i { display: block; }
+.pack .pv b { position: absolute; left: 0; right: 0; top: 58%; text-align: center; font: 800 10px Poppins, sans-serif; letter-spacing: .02em; }
+.pack .pv s { position: absolute; left: 10%; right: 10%; top: 9%; text-align: center; font: 700 7px Poppins, sans-serif; text-decoration: none; padding: 2px; border-radius: 2px; }
+.pack .pv u { position: absolute; left: 0; bottom: 0; height: 3px; width: 55%; text-decoration: none; }
+.pack .nm { font-weight: 700; font-size: 12px; }
+.pack .ds { color: var(--muted); font-size: 10.5px; line-height: 1.25; }
+.presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.preset { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 9px 4px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel2); font-size: 11px; font-weight: 600; text-align: center; line-height: 1.2; }
+.preset.on { border-color: var(--accent); background: rgba(200,241,53,.08); }
+.thumb { width: 30px; height: 50px; border-radius: 5px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid var(--line2); position: relative; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.row label, .lbl { font-weight: 600; font-size: 13px; }
+.hint { color: var(--muted); font-size: 12px; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); flex-shrink: 0; }
+input[type=color] { width: 38px; height: 30px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); padding: 2px; flex-shrink: 0; }
+input[type=text], input[type=url], input[type=number], select { height: 38px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); padding: 0 10px; width: 100%; }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.chip { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--panel2); font-size: 13px; }
+.chip i { width: 12px; height: 12px; border-radius: 3px; border: 2px solid; flex-shrink: 0; }
+.sub { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 10px; background: var(--panel2); }
+.seg { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 6px; }
+.seg button { height: 34px; border-radius: 7px; border: 1px solid var(--line); background: var(--bg); font-size: 12px; font-weight: 600; }
+.seg button.on { border-color: var(--accent); color: var(--accent); }
+.status { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.status.ok { color: var(--accent); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.spin { width: 12px; height: 12px; border: 2px solid var(--line2); border-top-color: var(--accent); border-radius: 50%; animation: sp 0.8s linear infinite; flex-shrink: 0; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.pills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.pills button { height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid var(--line); background: var(--bg); font-size: 11.5px; font-weight: 600; }
+.pills button.on { border-color: var(--accent); color: var(--accent); }
+.item .cat { font-size: 10.5px; color: var(--muted); padding: 1px 6px; border-radius: 9px; border: 1px solid var(--line); }
+.list { display: flex; flex-direction: column; gap: 6px; }
+.item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 8px; background: var(--panel2); border: 1px solid transparent; font-size: 12px; }
+.item.sel { border-color: var(--accent); }
+.item .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.item .tm { color: var(--muted); font-variant-numeric: tabular-nums; }
+.sw8 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.sw { height: 34px; border-radius: 8px; border: 2px solid transparent; display: flex; overflow: hidden; padding: 0; }
+.sw i { flex: 1; } .sw.on { border-color: var(--text); }
+.icons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.ic { height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); display: grid; place-items: center; }
+.ic.on { border-color: var(--accent); color: var(--accent); }
+.styles { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.stl { height: 78px; border-radius: 10px; border: 2px solid var(--line); background: var(--panel2); padding: 8px; display: grid; place-items: center; }
+.stl svg { width: 100%; height: 100%; }
+.stl.on { border-color: var(--accent); }
+.colors { display: flex; flex-wrap: wrap; gap: 8px; }
+.cpair { display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); }
+.cpair i { width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--line2); }
+.cdot { width: 28px; height: 28px; border-radius: 7px; border: 2px solid var(--line2); padding: 0; }
+.cdot.on { border-color: var(--text); box-shadow: 0 0 0 2px var(--accent); }
+.lpv { height: 110px; border-radius: 10px; display: grid; place-items: center; padding: 10px; cursor: crosshair;
+  background: conic-gradient(#2a2e36 25%, #1d2026 0 50%, #2a2e36 0 75%, #1d2026 0) 0 0 / 16px 16px; }
+.lpv canvas { max-width: 100%; max-height: 90px; }
+
+main { min-width: 0; overflow: auto; padding: 16px; display: flex; gap: 18px; align-items: flex-start; justify-content: center; flex-wrap: wrap; }
+.srccol { flex: 1 1 560px; max-width: 980px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.cap { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .04em; gap: 10px; }
+.stage { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); user-select: none; }
+.stage video { display: block; width: 100%; height: 100%; }
+.ov { position: absolute; inset: 0; pointer-events: none; }
+.ov .rect { pointer-events: auto; }
+.rect { position: absolute; border: 2px solid; border-radius: 4px; cursor: move; touch-action: none; }
+.rect span { position: absolute; left: -2px; top: -2px; font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 3px 0 4px 0; color: #0E0F11; pointer-events: none; white-space: nowrap; }
+.rect .h { position: absolute; right: -8px; bottom: -8px; width: 16px; height: 16px; border-radius: 3px; cursor: nwse-resize; }
+.rect.dashed { border-style: dashed; }
+
+.empty { aspect-ratio: 16/9; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; color: var(--muted); padding: 24px; border: 2px dashed var(--line2); border-radius: 10px; }
+.empty b { color: var(--text); font-size: 18px; display: block; margin-bottom: 4px; }
+.recent { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 700px; }
+.rc { width: 160px; display: flex; flex-direction: column; gap: 6px; padding: 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel2); text-align: left; }
+.rc:hover { border-color: var(--accent); }
+.rc img, .rc .ph0 { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; background: #000; display: block; }
+.rc b { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc span { font-size: 11px; color: var(--muted); }
+
+.tlbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.play { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex-shrink: 0; }
+.time { font-variant-numeric: tabular-nums; font-weight: 600; }
+.tlw { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; }
+.tlgrid { display: grid; grid-template-columns: 74px 1fr; }
+.tlname { font-size: 11px; font-weight: 700; color: var(--muted); display: flex; align-items: center; padding-left: 10px; border-bottom: 1px solid var(--line); background: var(--bar); }
+.track { position: relative; border-bottom: 1px solid var(--line); overflow: hidden; touch-action: none; cursor: pointer; }
+.track.ruler { height: 24px; background: var(--bar); }
+.track.vid { height: 46px; }
+.track.sm { height: 28px; }
+.track.au { height: 38px; background: #12161B; }
+.track canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; display: block; }
+.track.vid.strip .seg-v { background: rgba(43,63,74,.28); }
+.track.vid.strip .seg-v.cut { background: repeating-linear-gradient(-45deg, rgba(255,107,107,.5) 0 4px, rgba(20,10,12,.75) 4px 9px); }
+.tick { position: absolute; top: 0; height: 100%; border-left: 1px solid var(--line2); font-size: 10px; color: var(--muted); padding: 5px 0 0 3px; font-variant-numeric: tabular-nums; pointer-events: none; white-space: nowrap; }
+.seg-v { position: absolute; top: 4px; bottom: 4px; border-radius: 5px; background: #2B3F4A; border: 1px solid #3E5A68; }
+.seg-v.sel { border: 2px solid var(--accent); }
+.seg-v.cut { background: repeating-linear-gradient(-45deg, rgba(255,107,107,.45) 0 4px, rgba(20,10,12,.9) 4px 9px); border-color: var(--danger); }
+.silv { position: absolute; top: 4px; bottom: 4px; background-image: repeating-linear-gradient(45deg, rgba(255,138,61,.6) 0 3px, transparent 3px 8px); pointer-events: none; }
+.dim { position: absolute; top: 0; bottom: 0; background: rgba(0,0,0,.55); pointer-events: none; }
+.blk { position: absolute; top: 4px; bottom: 4px; border-radius: 5px; font-size: 10px; font-weight: 700; color: #0E0F11; padding: 0 6px; overflow: hidden; white-space: nowrap; display: flex; align-items: center; }
+.blk.sub { background: #E8E9EC; color: #222; }
+.blk.zm { background: var(--zoom); cursor: grab; }
+.blk.zm.sel { outline: 2px solid #fff; }
+.blk.zm .e { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; }
+.blk.zm .e.l { left: 0; } .blk.zm .e.r { right: 0; }
+.blk.mus { background: var(--mus); }
+.mk { position: absolute; top: 3px; bottom: 3px; width: 18px; margin-left: -9px; border-radius: 5px; background: var(--fx); display: grid; place-items: center; cursor: grab; color: #fff; font-size: 10px; font-weight: 800; }
+.mk.sel { outline: 2px solid #fff; }
+.hdl { position: absolute; top: 0; bottom: 0; width: 12px; background: var(--accent); cursor: ew-resize; border-radius: 3px; z-index: 2; }
+.hdl::after { content: ""; position: absolute; left: 5px; top: 6px; bottom: 6px; width: 2px; background: var(--accent-ink); }
+.selr { position: absolute; top: 0; bottom: 0; border-top: 2px solid var(--accent); border-bottom: 2px solid var(--accent); pointer-events: none; }
+.ph { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; pointer-events: none; z-index: 3; box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
+.tlinfo { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; padding: 6px 10px; gap: 10px; flex-wrap: wrap; }
+
+.outcol { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.outwrap { position: relative; width: 270px; height: 480px; }
+canvas#out { width: 270px; height: 480px; border-radius: 14px; border: 1px solid var(--line2); background: #000; display: block; }
+#outOv { position: absolute; inset: 0; border-radius: 14px; overflow: hidden; }
+
+dialog { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); color: var(--text); padding: 24px; width: min(560px, 92vw); }
+dialog.wide { width: min(760px, 94vw); }
+dialog::backdrop { background: rgba(0,0,0,.6); }
+dialog h2 { margin: 0 0 4px; font-family: Poppins, sans-serif; font-size: 20px; }
+dialog form { display: flex; flex-direction: column; gap: 14px; }
+.bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.err { color: var(--danger); font-weight: 600; white-space: pre-wrap; font-size: 13px; }
+.ok { color: var(--accent); font-weight: 700; }
+.actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.chunks { display: flex; flex-direction: column; gap: 6px; max-height: 56vh; overflow-y: auto; padding-right: 4px; }
+.ck { display: grid; grid-template-columns: 92px 1fr auto auto; gap: 8px; align-items: center; }
+.ck .t { font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); }
+.ck.cur input { border-color: var(--accent); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--panel2); border: 1px solid var(--line2); padding: 10px 16px; border-radius: 10px; display: none; z-index: 9; max-width: 80vw; }
+.hl { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 8px; align-items: center; padding: 8px; border-radius: 8px; background: var(--panel2); border: 1px solid transparent; font-size: 12px; }
+.hl.sel { border-color: var(--accent); }
+.hl .lv { font-size: 10.5px; font-weight: 700; padding: 1px 7px; border-radius: 9px; background: var(--line); }
+.hl .lv.l3 { background: #FF6B6B; color: #111; } .hl .lv.l2 { background: #FF8A3D; color: #111; }
+.hl .acts { grid-column: 1 / -1; display: flex; gap: 6px; }
+.hlmk { position: absolute; top: 0; bottom: 0; background: rgba(255,107,107,.28); border-left: 2px solid #FF6B6B; pointer-events: none; }
+.heat { position: absolute; bottom: 0; width: 0.25%; background: #FF6B6B; opacity: .55; pointer-events: none; }
+.badge { min-width: 18px; height: 18px; border-radius: 9px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 800; display: inline-grid; place-items: center; padding: 0 5px; }
+.qi { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; padding: 10px; border-radius: 10px; background: var(--panel2); font-size: 13px; }
+.qi .bar { grid-column: 1 / -1; }
+.qi .acts { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+.qr { display: grid; place-items: center; background: #fff; border-radius: 12px; padding: 10px; width: 220px; margin: 0 auto; }
+.qr svg { width: 200px; height: 200px; }
+.sug { display: flex; flex-direction: column; gap: 6px; }
+.sug button.t { text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-size: 13px; }
+.sug button.t:hover { border-color: var(--accent); }
+textarea { width: 100%; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; color: var(--text); font: inherit; resize: vertical; }
+.thimg { max-width: 100%; max-height: 360px; border-radius: 10px; display: block; margin: 0 auto; }
+.wz-steps { display: flex; gap: 6px; }
+.wz-steps i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.wz-steps i.on { background: var(--accent); }
+.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.mode { text-align: left; padding: 14px; border-radius: 12px; border: 2px solid var(--line); background: var(--panel2); display: flex; flex-direction: column; gap: 6px; }
+.mode b { font-size: 15px; } .mode span { color: var(--muted); font-size: 12.5px; }
+.mode.on { border-color: var(--accent); background: rgba(200,241,53,.08); }
+.mode em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--accent); }
+#dWiz .packs { grid-template-columns: repeat(6, 1fr); }
+.upd { display: flex; align-items: center; gap: 10px; padding: 7px 16px; background: rgba(200,241,53,.12); border-bottom: 1px solid var(--accent); font-size: 13px; }
+.upd span { flex: 1; }
+#bLic.free { border-color: var(--accent); color: var(--accent); }
+.licbox { background: var(--panel2); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 6px; }
+.licbox b.big { font-size: 18px; }
+.freeinfo { font-size: 12.5px; color: var(--muted); background: var(--panel2); border-radius: 8px; padding: 8px 10px; }
+.freeinfo a { color: var(--accent); cursor: pointer; }
+.drop { position: fixed; inset: 0; background: rgba(14,15,17,.85); border: 3px dashed var(--accent); display: grid; place-items: center; z-index: 8; font-size: 22px; font-weight: 700; color: var(--accent); }
+@media (max-width: 1000px) { .body { grid-template-columns: 64px 1fr; } main { grid-column: 1 / -1; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="upd" id="updBar" hidden><span id="updTxt"></span><button class="btn tiny primary" id="updGo" type="button">İndir ve kur</button><button class="btn tiny ghost" id="updLater" type="button">Sonra</button></div>
+  <header>
+    <div class="logo"><img src="/static/logo.svg" width="30" height="30" alt=""><span>Stream<span style="color:var(--accent)">chisel</span></span></div>
+    <div class="file"><b id="fname">Video açılmadı</b><span id="fmeta">Bir yayın kaydı aç, sürükle-bırak ya da linkten indir</span></div>
+    <div class="spacer"></div>
+    <button class="btn" id="bWiz" type="button" disabled title="Birkaç adımda hazır klip">✨ Hızlı klip</button>
+    <button class="btn ghost" id="bProj" type="button" title="Projeyi kaydet / aç">Proje</button>
+    <button class="btn" id="bLic" type="button" hidden>Lisans</button>
+    <button class="btn ghost" id="bQueue" type="button" hidden>Kuyruk <span class="badge" id="qCount">0</span></button>
+    <button class="btn" id="bOpen" type="button">Video aç</button>
+    <button class="btn" id="bDl" type="button">Linkten indir</button>
+    <button class="btn primary" id="bExp" type="button" disabled>Dışa aktar</button>
+  </header>
+
+  <div class="body">
+    <nav class="rail" role="tablist" aria-label="Bölümler" id="rail"></nav>
+
+    <aside>
+      <section class="tab" data-tab="medya" role="tabpanel">
+        <h2>Medya</h2>
+        <div class="sec">
+          <button class="btn wide" type="button" data-act="open">Bilgisayardan video aç</button>
+          <button class="btn wide" type="button" data-act="dl">Linkten indir (Kick, Twitch, YouTube…)</button>
+          <div class="hint">Videoyu pencereye sürükleyip bırakarak da açabilirsin.</div>
+        </div>
+        <div class="sec"><h3>Son projeler</h3><div class="list" id="recentList"><div class="hint">Henüz proje yok.</div></div></div>
+      </section>
+
+      <section class="tab" data-tab="anlar" role="tabpanel" hidden>
+        <h2>En iyi anlar</h2>
+        <div class="hint">Yayının sesinden heyecanlı anları (bağırma, gülme, ani tepki) bulur. İnternet ve API gerekmez; 3 saatlik yayın 1–2 dakikada taranır.</div>
+        <div class="sec">
+          <div class="row"><label for="hlLen">Klip uzunluğu</label><select id="hlLen" style="width:auto"><option value="15">15 sn</option><option value="30">30 sn</option><option value="45" selected>45 sn</option><option value="60">60 sn</option><option value="90">90 sn</option></select></div>
+          <div class="row"><label for="hlCount">Kaç an bulunsun</label><select id="hlCount" style="width:auto"><option>3</option><option selected>6</option><option>10</option><option>15</option></select></div>
+          <div class="row"><label for="hlRange">Sadece seçili aralıkta ara</label><input id="hlRange" type="checkbox"></div>
+          <button class="btn primary wide" id="bHl" type="button" disabled>En iyi anları bul</button>
+          <div class="status" id="hlStat">Önce bir video aç.</div>
+        </div>
+        <div class="sec">
+          <h3>Bulunan anlar <button class="btn tiny" id="bHlAll" type="button" hidden>Tümünü seç</button></h3>
+          <div class="list" id="hlList"></div>
+          <button class="btn primary wide" id="bHlExp" type="button" disabled>Seçilenleri dışa aktar</button>
+          <div class="hint">Her an şu anki kadraj, altyazı, logo ve ses ayarlarınla ayrı video olarak sıraya eklenir. Bilgisayar kasılmasın diye sırayla işlenir.</div>
+        </div>
+      </section>
+
+      <section class="tab" data-tab="kadraj" role="tabpanel" hidden>
+        <h2>Kadraj</h2>
+        <div class="sec"><h3>Hazır stiller</h3><div class="packs" id="packs"></div><div class="hint">Kadraj, altyazı, renk, kanca ve ses ayarlarını tek tıkla uygular. Sonra istediğini değiştirebilirsin.</div></div>
+        <div class="sec"><h3>Çıktı biçimi</h3><div class="seg" id="fmtSeg" style="--n:3"></div><div class="hint" id="fmtHint"></div></div>
+        <div class="sec">
+          <h3>Düzenlerim</h3>
+          <select id="lySel" aria-label="Kayıtlı düzenler"><option value="">— Kayıtlı düzen seç —</option></select>
+          <div class="row"><button class="btn small wide" id="lySave" type="button">Bu düzeni kaydet</button><button class="btn small ghost" id="lyDel" type="button" disabled>Sil</button></div>
+        </div>
+        <div class="sec"><h3>Düzen şablonu</h3><div class="presets" id="presets"></div></div>
+        <div class="sec" id="secRatio">
+          <div class="row"><label for="ratio">Kamera / oyun oranı</label><span class="hint" id="ratioV">35 / 65</span></div>
+          <input id="ratio" type="range" min="20" max="60" value="35">
+        </div>
+        <div class="sec" id="secRects">
+          <h3>Kadrajlar <button class="btn tiny ghost" id="bReset" type="button">Sıfırla</button></h3>
+          <div id="chips" class="list"></div>
+          <button class="btn small wide" id="bDetect" type="button">Kamerayı otomatik bul</button>
+          <div class="status" id="detStat" hidden></div>
+          <div class="row"><label for="lockOn">Oranı kilitle <span class="hint">(gördüğün = çıkan)</span></label><input id="lockOn" type="checkbox"></div>
+          <div id="fitBox"><div class="lbl" style="margin-bottom:6px">Oyun alanı</div><div class="seg" id="fitSeg" style="--n:2"></div></div>
+        </div>
+        <div class="sec" id="secFree" hidden>
+          <h3>Katmanlar <button class="btn tiny" id="bAddLayer" type="button">+ Katman</button></h3>
+          <div class="list" id="layerList"></div>
+          <div class="hint">Soldaki kutu: kaynaktan alınan yer. Sağdaki kutu: dikey videoda durduğu yer. İkisini de sürükleyebilirsin.</div>
+          <div class="row"><label for="freeBg">Arka plan</label><select id="freeBg" style="width:auto"><option value="blur">Bulanık video</option><option value="black">Siyah</option></select></div>
+        </div>
+        <div class="sec" id="secBlur">
+          <div class="row"><label for="blurAmt">Arka plan bulanıklığı</label><span class="hint" id="blurV">40</span></div>
+          <input id="blurAmt" type="range" min="0" max="80" value="40">
+        </div>
+        <div class="sec">
+          <h3>Özel zoom alanları <button class="btn tiny" id="bAddZoom" type="button" disabled>+ Şu ana ekle</button></h3>
+          <div class="list" id="zoomList"></div>
+        </div>
+      </section>
+
+      <section class="tab" data-tab="altyazi" role="tabpanel" hidden>
+        <h2>Altyazı</h2>
+        <div class="row"><label for="subOn">Otomatik altyazı</label><input id="subOn" type="checkbox"></div>
+        <div class="sub" id="subBox">
+          <div class="seg" id="styles"></div>
+          <div class="row"><label for="subLang">Dil</label><select id="subLang" style="width:auto"><option value="">Otomatik</option><option value="tr">Türkçe</option><option value="en">İngilizce</option></select></div>
+          <div class="row"><label for="subModel">Doğruluk</label><select id="subModel" style="width:auto"><option value="base">Hızlı</option><option value="small">Dengeli</option><option value="medium">Yüksek (yavaş)</option></select></div>
+          <div class="row"><label for="subAnim">Animasyon</label><select id="subAnim" style="width:auto"><option value="none">Yok</option><option value="pop">Pop (büyüyerek gel)</option><option value="bounce">Zıplayan kelime</option><option value="karaoke">Karaoke</option><option value="fade">Yumuşak belir</option><option value="slide">Aşağıdan kay</option></select></div>
+          <div class="row"><label for="subTr">İngilizceye çevir</label><input id="subTr" type="checkbox"></div>
+          <div class="row"><label for="subPos">Konum</label><input id="subPos" type="range" min="40" max="85" value="62" style="width:60%"></div>
+          <div class="row"><button class="btn small wide" id="bTr" type="button" disabled>Altyazıyı önizle</button><button class="btn small" id="bTrEdit" type="button" hidden>Düzenle</button></div>
+          <div class="status" id="trStat">Önizlemede örnek yazı gösteriliyor</div>
+        </div>
+        <div class="sec">
+          <div class="row"><label for="tagOn">Yayıncı etiketi</label><input id="tagOn" type="checkbox"></div>
+          <input id="tagText" type="text" placeholder="kick/kanaladi" aria-label="Etiket yazısı">
+        </div>
+        <div class="sec">
+          <div class="row"><label for="hookOn">Kanca yazısı (ilk saniyeler)</label><input id="hookOn" type="checkbox"></div>
+          <div class="sub" id="hookBox" hidden>
+            <textarea id="hookText" rows="2" placeholder="BUNU GÖRMEN LAZIM&#10;sonuna kadar izle" aria-label="Kanca yazısı"></textarea>
+            <div class="seg" id="hookStyle" style="--n:2"></div>
+            <div class="row"><label for="hookDur">Süre</label><select id="hookDur" style="width:auto"><option value="2">2 sn</option><option value="3">3 sn</option><option value="5">5 sn</option><option value="0">Video boyunca</option></select></div>
+            <div class="row"><label for="hookY">Konum</label><input id="hookY" type="range" min="5" max="90" value="16" style="width:60%"></div>
+            <div class="hint">İzleyiciyi ilk 2 saniyede tutan kısa bir başlık. Ör. "Bunu kimse beklemiyordu 😳"</div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="row"><label for="pbOn">İlerleme çubuğu</label><input id="pbOn" type="checkbox"></div>
+          <div class="row" id="pbBox" hidden><label for="pbPos">Yeri</label><select id="pbPos" style="width:auto"><option value="bottom">Altta</option><option value="top">Üstte</option></select><input id="pbColor" type="color" value="#C8F135" aria-label="Çubuk rengi"></div>
+        </div>
+      </section>
+
+      <section class="tab" data-tab="logo" role="tabpanel" hidden>
+        <h2>Logo</h2>
+        <div class="row"><label for="logoOn">Videoya logo ekle</label><input id="logoOn" type="checkbox"></div>
+        <div class="seg" id="logoSrc" style="--n:2"></div>
+        <div class="lpv" id="lpv" title="Renk seçmek için logoya tıkla"><canvas id="lpvC" width="10" height="10"></canvas></div>
+
+        <div id="genBox" class="tab" style="gap:14px">
+          <div class="sec"><label class="lbl" for="lgName">Kanal adı</label><input id="lgName" type="text" maxlength="18"></div>
+          <div class="sec"><span class="lbl">Platform</span><div class="seg" id="lgPlat" style="--n:4"></div></div>
+          <div class="sec"><span class="lbl">Stil</span><div class="styles" id="lgStyles"></div></div>
+          <div class="sec"><span class="lbl">Renkler</span><div class="sw8" id="lgPal"></div></div>
+          <div class="sec"><span class="lbl">Simge</span><div class="icons" id="lgIcons"></div></div>
+        </div>
+
+        <div id="fileBox" class="tab" style="gap:14px" hidden>
+          <button class="btn wide" id="bLogoPick" type="button">Logo dosyası seç (PNG, JPG, SVG)</button>
+          <div class="hint" id="logoFileName">Logo dosyasını pencereye sürükleyip bırakabilirsin.</div>
+          <div class="sec" id="svgColorsBox" hidden><h3>Renkler <button class="btn tiny ghost" id="bSvgReset" type="button">Sıfırla</button></h3><div class="colors" id="svgColors"></div><div class="hint">SVG logodaki her rengi ayrı ayrı değiştirebilirsin.</div></div>
+          <div class="sec" id="rasterBox" hidden>
+            <h3>Renklendirme</h3>
+            <div class="seg" id="rMode" style="--n:4"></div>
+            <div class="sub" id="rTint" hidden><div class="row"><label for="rTintC">Renk</label><input id="rTintC" type="color" value="#C8F135"></div><div class="hint">Logonun tamamı bu renge boyanır, saydam yerler korunur.</div></div>
+            <div class="sub" id="rRepl" hidden>
+              <div class="lbl">Değişecek renk <span class="hint">(logoya tıklayarak da seçebilirsin)</span></div>
+              <div class="colors" id="rDom"></div>
+              <div class="row"><label for="rReplC">Yeni renk</label><input id="rReplC" type="color" value="#C8F135"></div>
+              <div class="row"><label for="rTol">Benzer tonlar</label><input id="rTol" type="range" min="5" max="80" value="30" style="width:55%"></div>
+            </div>
+            <div class="sub" id="rHue" hidden>
+              <div class="row"><label for="rHueV">Ton</label><input id="rHueV" type="range" min="-180" max="180" value="0" style="width:60%"></div>
+              <div class="row"><label for="rSat">Doygunluk</label><input id="rSat" type="range" min="0" max="250" value="100" style="width:60%"></div>
+              <div class="row"><label for="rBri">Parlaklık</label><input id="rBri" type="range" min="30" max="200" value="100" style="width:60%"></div>
+            </div>
+            <div class="row"><label for="rBg">Arka planı sil</label><input id="rBg" type="checkbox"></div>
+            <div class="row" id="rBgTolRow" hidden><label for="rBgTol">Silme hassasiyeti</label><input id="rBgTol" type="range" min="2" max="70" value="25" style="width:55%"></div>
+          </div>
+        </div>
+
+        <div class="sec">
+          <h3>Efektler</h3>
+          <div class="row"><label for="fxOut">Dış çizgi</label><span style="display:flex;gap:6px;align-items:center"><input id="fxOutC" type="color" value="#FFFFFF" aria-label="Dış çizgi rengi"><input id="fxOut" type="checkbox"></span></div>
+          <div class="row" id="fxOutWRow" hidden><label for="fxOutW">Çizgi kalınlığı</label><input id="fxOutW" type="range" min="1" max="14" value="5" style="width:55%"></div>
+          <div class="row"><label for="fxGlow">Neon parıltı</label><span style="display:flex;gap:6px;align-items:center"><input id="fxGlowC" type="color" value="#C8F135" aria-label="Parıltı rengi"><input id="fxGlow" type="checkbox"></span></div>
+          <div class="row"><label for="fxSh">Gölge</label><input id="fxSh" type="checkbox"></div>
+        </div>
+        <div class="sec">
+          <h3>Yerleşim</h3>
+          <div class="seg" id="lgPos" style="--n:3"></div>
+          <div class="row"><label for="lgSize">Boyut</label><input id="lgSize" type="range" min="10" max="90" value="34" style="width:60%"></div>
+          <div class="row"><label for="lgOp">Saydamlık</label><input id="lgOp" type="range" min="15" max="100" value="100" style="width:60%"></div>
+          <div class="row"><label for="lgFade">Giriş/çıkışta yumuşak belir</label><input id="lgFade" type="checkbox"></div>
+          <div class="hint">Logoyu sağdaki önizlemede sürükleyerek de taşıyabilirsin.</div>
+        </div>
+      </section>
+
+      <section class="tab" data-tab="ses" role="tabpanel" hidden>
+        <h2>Ses</h2>
+        <div class="sec"><div class="row"><label for="srcVol">Kaynak ses</label><span class="hint" id="srcVolV">100%</span></div><input id="srcVol" type="range" min="0" max="200" value="100"></div>
+        <div class="sec">
+          <h3>Ses iyileştirme</h3>
+          <div class="row"><label for="enDen">Arka plan gürültüsünü azalt</label><input id="enDen" type="checkbox"></div>
+          <div class="row"><label for="enNorm">Ses seviyesini dengele (platform standardı)</label><input id="enNorm" type="checkbox"></div>
+          <div class="hint">Fan, klima, mikrofon cızırtısını azaltır; videonun sesi telefonda ne çok kısık ne çok yüksek olur (−14 LUFS).</div>
+        </div>
+        <div class="sec">
+          <h3>Müzik</h3>
+          <div id="musEmpty"><button class="btn small wide" id="bMusPick" type="button">Müzik ekle</button><div class="hint" style="margin-top:6px">Telifsiz müzik kullan; telifli müzik platformlarda videonun sesini kapattırabilir.</div></div>
+          <div class="sub" id="musBox" hidden>
+            <div class="row"><b id="musName" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button class="btn tiny ghost danger" id="bMusDel" type="button">Kaldır</button></div>
+            <div class="row"><label for="musVol">Ses seviyesi</label><input id="musVol" type="range" min="0" max="100" value="25" style="width:55%"></div>
+            <div class="row"><label for="musDuck">Konuşurken müziği kıs</label><input id="musDuck" type="checkbox"></div>
+            <div class="row"><label for="musOff">Müziğin başlangıcı (sn)</label><input id="musOff" type="number" min="0" step="1" value="0" style="width:90px"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <h3>Ses efektleri <button class="btn tiny" id="bFxPick" type="button" disabled>+ Kendi sesin</button></h3>
+          <div class="hint">▶ dinle · "Ekle" ile oynatıcının olduğu ana yerleştir. Zaman çizelgesinde sürükleyerek kaydırabilirsin.</div>
+          <input id="sfxQ" type="search" placeholder="Efekt ara…" aria-label="Efekt ara" style="width:100%;margin:6px 0">
+          <div class="pills" id="sfxCats" role="group" aria-label="Efekt kategorisi"></div>
+          <div class="list" id="sfxLib" style="max-height:340px;overflow:auto"></div>
+        </div>
+        <div class="sec"><h3>Eklenen efektler</h3><div class="list" id="sfxList"><div class="hint">Henüz efekt yok.</div></div></div>
+      </section>
+
+      <section class="tab" data-tab="renk" role="tabpanel" hidden>
+        <h2>Renk</h2>
+        <div class="sec"><h3>Hazır ayarlar</h3><div class="seg" id="colPre" style="--n:3"></div></div>
+        <div class="sec">
+          <div class="row"><label for="cBri">Parlaklık</label><span class="hint" id="cBriV">100</span></div><input id="cBri" type="range" min="50" max="150" value="100">
+          <div class="row"><label for="cCon">Kontrast</label><span class="hint" id="cConV">100</span></div><input id="cCon" type="range" min="50" max="160" value="100">
+          <div class="row"><label for="cSat">Doygunluk</label><span class="hint" id="cSatV">100</span></div><input id="cSat" type="range" min="0" max="200" value="100">
+          <button class="btn small ghost" id="cReset" type="button">Sıfırla</button>
+        </div>
+        <div class="hint">Renk ayarı sadece videoya uygulanır; logo, altyazı ve etiket etkilenmez.</div>
+      </section>
+    </aside>
+
+    <main>
+      <section class="srccol" aria-label="Kaynak video ve zaman çizelgesi">
+        <div class="cap"><span>KAYNAK</span><span id="rectHint"></span></div>
+        <div class="stage" id="stage">
+          <div class="empty" id="empty">
+            <div><b>Bir yayın kaydını buraya sürükle</b>ya da üstteki "Video aç" / "Linkten indir" butonlarını kullan</div>
+            <div class="row" style="justify-content:center;flex-wrap:wrap"><button class="btn primary" id="bResume" type="button" hidden>Son çalışmaya devam et</button><button class="btn" id="bDemo" type="button">▶ Örnek videoyla dene</button></div>
+            <div class="recent" id="recent"></div>
+          </div>
+          <video id="vid" preload="auto" playsinline hidden></video>
+          <div class="ov" id="ov"></div>
+        </div>
+
+        <div class="tlbar">
+          <button class="play" id="bPlay" type="button" aria-label="Oynat / duraklat"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path id="playIco" d="M7 4l13 8-13 8z"/></svg></button>
+          <button class="btn small" id="bPrevF" type="button" aria-label="Bir kare geri" title="Bir kare geri (,)">◀▮</button>
+          <button class="btn small" id="bNextF" type="button" aria-label="Bir kare ileri" title="Bir kare ileri (.)">▮▶</button>
+          <span class="time" id="tNow">00:00:00</span><span class="hint" id="tDur">/ 00:00:00</span>
+          <div class="spacer"></div>
+          <button class="btn small" id="bSplit" type="button" title="Oynatıcının olduğu yerden böl (S)">Böl</button>
+          <button class="btn small" id="bDelSeg" type="button" title="Seçili parçayı sil / geri getir (Delete)">Parçayı sil</button>
+          <button class="btn small ghost" id="bUndo" type="button" title="Geri al (Ctrl+Z)">Geri al</button>
+          <button class="btn small ghost" id="bSnap" type="button" aria-pressed="true" aria-label="Mıknatıs" title="Mıknatıs: sürüklerken oynatıcıya, kesimlere ve diğer bloklara yapış (M)">🧲</button>
+          <span style="width:8px"></span>
+          <button class="btn small" id="bIn" type="button" title="Kısayol: I">[ Başlangıç</button>
+          <button class="btn small" id="bOut" type="button" title="Kısayol: O">Bitiş ]</button>
+          <button class="btn small ghost" id="bAll" type="button">Tümü</button>
+        </div>
+        <div class="tlw">
+          <div class="tlgrid">
+            <div class="tlname" style="height:24px;gap:4px;padding-left:6px"><button class="btn tiny" id="bZoomOut" type="button" aria-label="Zaman çizelgesini uzaklaştır" style="height:18px;width:24px;padding:0">−</button><button class="btn tiny" id="bZoomIn" type="button" aria-label="Zaman çizelgesini yakınlaştır" style="height:18px;width:24px;padding:0">+</button></div><div class="track ruler" id="trRuler"></div>
+            <div class="tlname" style="height:46px">Video</div><div class="track vid" id="trVid"></div>
+            <div class="tlname" style="height:38px" id="audName">Kaynak ses</div><div class="track au" id="trAud"><canvas id="cvAud" aria-label="Ses dalgası"></canvas></div>
+            <div class="tlname" style="height:28px">Altyazı</div><div class="track sm" id="trSub"></div>
+            <div class="tlname" style="height:28px">Zoom</div><div class="track sm" id="trZoom"></div>
+            <div class="tlname" style="height:28px">Efekt</div><div class="track sm" id="trFx"></div>
+            <div class="tlname" style="height:28px">Müzik</div><div class="track sm" id="trMus"></div>
+          </div>
+          <div class="tlinfo"><span id="rangeTxt">Klip: tüm video</span><span>Turuncu çizgili: kesilecek sessizlik · Kırmızı çizgili: sildiğin parça · Ctrl+tekerlek: yakınlaştır</span></div>
+        </div>
+      </section>
+
+      <section class="outcol" aria-label="Dikey önizleme">
+        <div class="cap" style="align-self:stretch"><span id="outCap">ÇIKTI · 9:16</span><button class="btn tiny ghost" id="bSafe" type="button" aria-pressed="false" title="Platform yazılarının ve butonlarının kapattığı alanlar">Güvenli alan</button></div>
+        <div class="outwrap" id="outWrap"><canvas id="out" width="540" height="960"></canvas><div id="outOv"></div></div>
+        <span class="hint" id="outHint">Altyazı burada örnek yazıyla gösterilir</span>
+      </section>
+    </main>
+  </div>
+</div>
+
+<dialog id="dDl">
+  <form method="dialog" id="fDl">
+    <div><h2>Linkten video indir</h2><div class="hint">YouTube · Kick · Twitch · TikTok · Instagram · X</div></div>
+    <label for="dlUrl" style="font-weight:600">Video bağlantısı</label>
+    <input id="dlUrl" type="url" placeholder="https://kick.com/..." required>
+    <div class="row"><label for="dlQ">Kalite</label><select id="dlQ" style="width:auto"><option value="best">En yüksek</option><option value="1080">1080p</option><option value="720">720p</option></select></div>
+    <div id="dlProg" hidden><div class="row"><span id="dlStat">İndiriliyor…</span><span class="hint" id="dlPct"></span></div><div class="bar"><i id="dlBar"></i></div></div>
+    <div class="err" id="dlErr"></div>
+    <div class="actions"><button class="btn" type="button" id="dlClose">Kapat</button><button class="btn primary" type="submit" id="dlGo">İndir ve aç</button></div>
+  </form>
+</dialog>
+
+<dialog id="dExp">
+  <form method="dialog" id="fExp">
+    <div><h2>Dışa aktar</h2><div class="hint" id="expInfo"></div></div>
+    <label for="expName" style="font-weight:600">Dosya adı</label>
+    <input id="expName" type="text">
+    <div class="row"><label for="expQ">Kalite</label><select id="expQ" style="width:auto"><option value="high">Yüksek</option><option value="balanced">Dengeli</option><option value="small">Küçük dosya</option></select></div>
+    <div class="freeinfo" id="expFree" hidden></div>
+    <details id="expSugBox">
+      <summary style="cursor:pointer;font-weight:600">Başlık ve hashtag önerisi</summary>
+      <div class="sug" style="margin-top:8px">
+        <div class="row"><select id="sugPlat" style="width:auto" aria-label="Platform"><option value="genel">Genel</option><option value="kick">Kick</option><option value="twitch">Twitch</option><option value="youtube">YouTube Shorts</option><option value="tiktok">TikTok</option></select><input id="sugGame" type="text" placeholder="Oyun adı (isteğe bağlı)" aria-label="Oyun adı" style="flex:1"><button class="btn small" id="bSug" type="button">Öner</button></div>
+        <div id="sugTitles" class="sug"></div>
+        <textarea id="sugTags" rows="2" hidden aria-label="Hashtagler"></textarea>
+        <div class="hint" id="sugHint">Altyazıyı önizlediysen konuşulanlardan anahtar kelime çıkarılır. Başlığa tıklayınca kopyalanır.</div>
+      </div>
+    </details>
+    <div id="expProg" hidden><div class="row"><span id="expStat">Hazırlanıyor…</span><span class="hint" id="expPct"></span></div><div class="bar"><i id="expBar"></i></div></div>
+    <div id="expDone" hidden></div>
+    <div class="err" id="expErr"></div>
+    <div class="actions">
+      <button class="btn" type="button" id="expClose">Kapat</button>
+      <button class="btn" type="button" id="expReveal" hidden>Klasörde göster</button>
+      <button class="btn" type="button" id="expPlay" hidden>Videoyu oynat</button>
+      <button class="btn" type="button" id="expQr" hidden>Telefona gönder</button>
+      <button class="btn" type="button" id="expThumb">Kapak üret</button>
+      <button class="btn" type="button" id="expQueue">Sıraya ekle</button>
+      <button class="btn primary" type="submit" id="expGo">Videoyu oluştur</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dLy">
+  <form method="dialog" id="fLy">
+    <div><h2>Düzeni kaydet</h2><div class="hint">Şablon, kadrajlar, altyazı, logo, ses ve renk ayarların bu isimle saklanır.</div></div>
+    <label for="lyName" style="font-weight:600">Düzen adı</label>
+    <input id="lyName" type="text" placeholder="Ör. LoL düzenim" required maxlength="40">
+    <div class="actions"><button class="btn" type="button" id="lyCancel">Vazgeç</button><button class="btn primary" type="submit">Kaydet</button></div>
+  </form>
+</dialog>
+
+<dialog id="dTr" class="wide">
+  <form method="dialog" id="fTr">
+    <div><h2>Altyazıyı düzenle</h2><div class="hint">Yanlış kelimeyi düzelt, gereksiz satırı sil. "Git" ile o ana atla.</div></div>
+    <div class="chunks" id="chunks"></div>
+    <div class="actions"><button class="btn" type="button" id="trRedo">Yeniden oluştur</button><button class="btn primary" type="button" id="trClose">Bitti</button></div>
+  </form>
+</dialog>
+
+<dialog id="dWiz" class="wide">
+  <form method="dialog" id="fWiz">
+    <div class="wz-steps" aria-hidden="true"><i></i><i></i><i></i></div>
+    <section data-step="1">
+      <h2>Ne yapmak istiyorsun?</h2>
+      <div class="hint" id="wzInfo" style="margin-bottom:12px"></div>
+      <div class="modes">
+        <button class="mode" type="button" data-mode="moments"><em id="wzRec">ÖNERİLEN</em><b>🔥 En iyi anları bul</b><span>Yayını sesinden tarar, en heyecanlı anları ayrı kliplere çevirir. Uzun yayınlar için.</span></button>
+        <button class="mode" type="button" data-mode="single"><em></em><b>🎬 Tek klip yap</b><span id="wzSingleTxt">Videonun tamamını (ya da seçtiğin aralığı) tek dikey videoya çevirir.</span></button>
+      </div>
+    </section>
+    <section data-step="2" hidden>
+      <h2>Stil seç</h2>
+      <div class="hint" style="margin-bottom:12px">Sonra editörde her şeyi değiştirebilirsin.</div>
+      <div class="packs" id="wzPacks"></div>
+    </section>
+    <section data-step="3" hidden>
+      <h2>Son dokunuşlar</h2>
+      <div class="sec" style="margin-top:12px">
+        <div class="row" id="wzMomRow"><label for="wzLen">Klip uzunluğu</label><select id="wzLen" style="width:auto"><option value="15">15 sn</option><option value="30" selected>30 sn</option><option value="45">45 sn</option><option value="60">60 sn</option></select><label for="wzCount">Kaç klip</label><select id="wzCount" style="width:auto"><option>3</option><option selected>6</option><option>10</option></select></div>
+        <div class="row"><label>Çıktı biçimi</label><div class="seg" id="wzFmt" style="--n:3;width:60%"></div></div>
+        <div class="row"><label for="wzSubs">Otomatik altyazı</label><select id="wzLang" style="width:auto;margin-left:auto"><option value="">Dil: otomatik</option><option value="tr">Türkçe</option><option value="en">İngilizce</option></select><input id="wzSubs" type="checkbox"></div>
+        <div class="row"><label for="wzSil">Sessizlikleri kes</label><input id="wzSil" type="checkbox"></div>
+        <label for="wzHook" class="lbl">Kanca yazısı (isteğe bağlı)</label>
+        <input id="wzHook" type="text" placeholder="Ör. Bunu kimse beklemiyordu 😳" maxlength="80">
+      </div>
+    </section>
+    <section data-step="4" hidden>
+      <h2 id="wzDoneT">Hazırlanıyor…</h2>
+      <div class="status" id="wzStat" style="margin-top:10px"></div>
+    </section>
+    <div class="err" id="wzErr"></div>
+    <div class="actions">
+      <label class="hint" style="margin-right:auto;display:flex;gap:6px;align-items:center"><input type="checkbox" id="wzAuto"> Video açınca göster</label>
+      <button class="btn ghost" type="button" id="wzSkip">Editörde kendim yaparım</button>
+      <button class="btn" type="button" id="wzBack" hidden>Geri</button>
+      <button class="btn primary" type="submit" id="wzNext">İleri</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dLic">
+  <form method="dialog" id="fLic">
+    <div><h2>Lisans</h2><div class="hint" id="licVer"></div></div>
+    <div class="licbox" id="licBox"></div>
+    <div id="licForm">
+      <label for="licKey" style="font-weight:600">Lisans anahtarı</label>
+      <input id="licKey" type="text" placeholder="SC-XXXXX-XXXXX-XXXXX-XXXXX" autocomplete="off" spellcheck="false" style="font-family:ui-monospace,monospace;letter-spacing:.04em">
+      <div class="hint">Anahtar bu bilgisayara bağlanır. Etkinleştirmek için bir kez internet gerekir, sonra internetsiz de çalışır.</div>
+    </div>
+    <div class="err" id="licErr"></div>
+    <div class="actions">
+      <button class="btn ghost danger" type="button" id="licOff" hidden>Lisansı bu bilgisayardan kaldır</button>
+      <button class="btn" type="button" id="licBuy" hidden>Satın al</button>
+      <button class="btn" type="button" id="licClose">Kapat</button>
+      <button class="btn primary" type="submit" id="licGo">Etkinleştir</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dQueue" class="wide">
+  <form method="dialog">
+    <div><h2>Dışa aktarma kuyruğu</h2><div class="hint">Videolar sırayla oluşturulur. Bu pencereyi kapatıp düzenlemeye devam edebilirsin.</div></div>
+    <div class="list" id="qList" style="max-height:60vh;overflow:auto"></div>
+    <div class="actions"><button class="btn ghost" type="button" id="qClear">Bitenleri temizle</button><button class="btn" type="button" id="qDir">Klasörü aç</button><button class="btn primary" type="button" id="qClose">Kapat</button></div>
+  </form>
+</dialog>
+
+<dialog id="dQr">
+  <form method="dialog">
+    <div><h2>Telefona gönder</h2><div class="hint">Telefonun bu bilgisayarla <b>aynı Wi-Fi</b>'da olmalı. Kamerayla okut, açılan sayfadan indir.</div></div>
+    <div class="qr" id="qrBox"></div>
+    <input id="qrUrl" type="text" readonly aria-label="Bağlantı">
+    <div class="hint">Bağlantı 30 dakika geçerli ve sadece bu dosyayı gösterir. Windows "ağ erişimine izin ver" diye sorarsa <b>Özel ağlar</b>'a izin ver.</div>
+    <div class="actions"><button class="btn" type="button" id="qrCopy">Bağlantıyı kopyala</button><button class="btn primary" type="button" id="qrClose">Kapat</button></div>
+  </form>
+</dialog>
+
+<dialog id="dThumb">
+  <form method="dialog" id="fThumb">
+    <div><h2>Kapak üret</h2><div class="hint">Şu anki kadraj ve logonla 1080×1920 kapak resmi. Reels ve Shorts kapağı olarak yükleyebilirsin.</div></div>
+    <label for="thTitle" style="font-weight:600">Kapak yazısı</label>
+    <textarea id="thTitle" rows="2" placeholder="EN ÇILGIN AN&#10;yayında rekor"></textarea>
+    <div class="seg" id="thStyle" style="--n:2"></div>
+    <div class="row"><label for="thWhen">Kare</label><select id="thWhen" style="width:auto"><option value="auto">En net kareyi otomatik seç</option><option value="now">Oynatıcının olduğu kare</option></select></div>
+    <div id="thProg" hidden><div class="status"><span class="spin"></span>Kapak hazırlanıyor…</div></div>
+    <img id="thImg" class="thimg" alt="Üretilen kapak" hidden>
+    <div class="err" id="thErr"></div>
+    <div class="actions"><button class="btn" type="button" id="thClose">Kapat</button><button class="btn" type="button" id="thReveal" hidden>Klasörde göster</button><button class="btn" type="button" id="thQr" hidden>Telefona gönder</button><button class="btn primary" type="submit" id="thGo">Kapağı oluştur</button></div>
+  </form>
+</dialog>
+
+<dialog id="dProj">
+  <form method="dialog" id="fProj">
+    <div><h2>Proje</h2><div class="hint">Kesimler, zoom'lar, efektler, altyazı ve tüm ayarlar kaydedilir; sonra kaldığın yerden devam edersin. Çalışman ayrıca her 20 saniyede otomatik saklanır.</div></div>
+    <div class="row"><input id="projName" type="text" placeholder="Proje adı" aria-label="Proje adı" style="flex:1" maxlength="60"><button class="btn primary" type="submit" id="projSave">Kaydet</button></div>
+    <h3 style="margin:6px 0 0;font-size:12px;color:var(--muted);letter-spacing:.06em">KAYITLI PROJELER</h3>
+    <div class="list" id="projList" style="max-height:44vh;overflow:auto"></div>
+    <div class="actions"><button class="btn ghost" type="button" id="projPick">Başka konumdan aç…</button><button class="btn" type="button" id="projClose">Kapat</button></div>
+  </form>
+</dialog>
+
+<div class="drop" id="drop" hidden>Dosyayı bırak</div>
+<div class="toast" id="toast" role="status"></div>
+<audio id="musA" preload="auto"></audio>
+<script src="/static/logo.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

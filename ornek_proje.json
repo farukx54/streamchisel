@@ -1,0 +1,20 @@
+{
+  "input": "yayin.mp4",
+  "output": "cikti/klip1.mp4",
+  "range": { "start": 1640, "end": 1700 },
+
+  "canvas": { "width": 1080, "height": 1920, "fps": null, "background": "#000000" },
+
+  "layout": {
+    "preset": "stack",
+    "camera": { "x": 0.0156, "y": 0.0278, "w": 0.223, "h": 0.285 },
+    "game":   { "x": 0.25,   "y": 0.0,    "w": 0.5,   "h": 1.0 },
+    "camera_ratio": 0.35
+  },
+
+  "silence":   { "enabled": true, "threshold_db": -38, "min_silence": 0.8, "padding": 0.15 },
+  "subtitles": { "enabled": true, "model": "small", "language": "tr", "style": "bold",
+                 "word_highlight": true, "position_y": 0.62, "highlight_color": "#C8F135" },
+  "tag":       { "enabled": true, "text": "kick/kanaladi" },
+  "export":    { "encoder": "auto", "quality": "high" }
+}
