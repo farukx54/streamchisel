@@ -895,8 +895,8 @@ def preload() -> None:
     for mod in ("numpy", "cv2"):
         try:
             __import__(mod)
-        except Exception as e:  # eksikse ilgili özellik kendi hatasını gösterir
-            print(f"[ön yükleme] {mod}: {e}", flush=True)
+        except Exception:  # eksikse ilgili özellik kendi hatasını gösterir
+            print(f"[ön yükleme] {mod} yüklenemedi:\n{traceback.format_exc()}", flush=True)
 
 
 def start_server(port: int | None = None):
