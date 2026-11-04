@@ -88,15 +88,15 @@ jobs:
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; }
           & $iscc "/DSurum=$env:SURUM" paketleme\kurulum.iss
-          $f = "dist\Streamchisel-Setup-$env:SURUM.exe"
+          $f = "dist\Streamchisel-Setup.exe"
           $h = (Get-FileHash $f -Algorithm SHA256).Hash.ToLower()
-          "SHA-256: $h" | Tee-Object -FilePath "dist\Streamchisel-Setup-$env:SURUM.sha256.txt"
+          "SHA-256: $h" | Tee-Object -FilePath "dist\Streamchisel-Setup.sha256.txt"
           "Boyut: {0:N0} MB" -f ((Get-Item $f).Length / 1MB)
 
       - uses: actions/upload-artifact@v4
         with:
           name: Streamchisel-Setup-${{ env.SURUM }}
           path: |
-            dist/Streamchisel-Setup-*.exe
-            dist/Streamchisel-Setup-*.sha256.txt
+            dist/Streamchisel-Setup.exe
+            dist/Streamchisel-Setup.sha256.txt
           retention-days: 30

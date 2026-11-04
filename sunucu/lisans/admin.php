@@ -171,7 +171,7 @@ form.in{display:inline}.row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
 </div>
 <form class="card" method="post"><h2>Güncelleme yayınla</h2><input type="hidden" name="csrf" value="<?= h($csrf) ?>"><input type="hidden" name="act" value="update">
   <div class="row"><div><label>Sürüm</label><input name="version" value="<?= h($upd['version'] ?? '') ?>" placeholder="1.1.0" style="width:100%"></div>
-  <div style="flex:3"><label>Setup.exe bağlantısı (https)</label><input name="url" value="<?= h($upd['url'] ?? '') ?>" style="width:100%" placeholder="https://streamchisel.com/indir/Streamchisel-Setup-1.1.0.exe"></div></div>
+  <div style="flex:3"><label>Setup.exe bağlantısı (https)</label><input name="url" value="<?= h($upd['url'] ?? '') ?>" style="width:100%" placeholder="https://streamchisel.store/indir/Streamchisel-Setup.exe"></div></div>
   <label>SHA-256 (Setup.exe'nin özeti; derleme sonunda verilir)</label><input name="sha256" value="<?= h($upd['sha256'] ?? '') ?>" style="width:100%">
   <label>Yenilikler</label><textarea name="notes" rows="3" style="width:100%"><?= h($upd['notes'] ?? '') ?></textarea>
   <p><button class="pri">Yayınla</button> <span style="color:var(--m)">Sürümü boş bırakıp kaydedersen güncelleme bildirimi kalkar.</span></p></form>
